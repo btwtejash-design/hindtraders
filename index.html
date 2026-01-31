@@ -1,16 +1,81 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-IN">
 <head>
+    <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FVZSW5R4C3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-FVZSW5R4C3');
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hind Traders | Premier Railway Contractor</title>
-    <meta name="description" content="Hind Traders - Registered Railway Contractor & MSME Firm serving Eastern Railway. Specialists in material supply and works.">
+    
+    <title>Hind Traders | Registered Railway Contractor & MSME in Jamalpur</title>
+    <meta name="description" content="Hind Traders (Est. 2017) is a government-approved Railway Contractor and MSME Micro Enterprise in Jamalpur, Bihar. We specialize in railway material supply, tender execution, and infrastructure works for Eastern Railway.">
+    <meta name="keywords" content="Hind Traders Jamalpur, Railway Contractor Bihar, Eastern Railway Vendor, Railway Material Supply, MSME Railway Contractor, Works Tender Jamalpur, Satish Kumar Contractor, Railway Infrastructure Bihar">
+    <meta name="author" content="Hind Traders">
+    <meta name="robots" content="index, follow">
+    <meta name="geo.region" content="IN-BR" />
+    <meta name="geo.placename" content="Jamalpur" />
+    <meta name="geo.position" content="25.3122;86.4894" />
+    <meta name="ICBM" content="25.3122, 86.4894" />
+    <link rel="canonical" href="https://hindtraders.in/">
+
+    <meta property="og:type" content="business.business">
+    <meta property="og:title" content="Hind Traders - Trusted Railway Contractor">
+    <meta property="og:description" content="Official website of Hind Traders. Registered MSME & Eastern Railway Vendor based in Jamalpur, Munger.">
+    <meta property="og:url" content="https://hindtraders.in/">
+    <meta property="og:image" content="https://i.ibb.co/zTkBqd11/hind-traders-01-logo.png">
+    <meta property="og:site_name" content="Hind Traders">
+    <meta property="og:locale" content="en_IN">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "GeneralContractor",
+      "name": "Hind Traders",
+      "image": "https://i.ibb.co/zTkBqd11/hind-traders-01-logo.png",
+      "@id": "https://hindtraders.in",
+      "url": "https://hindtraders.in",
+      "telephone": "+917903235877",
+      "email": "contact@hindtraders.in",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "25, Chhoti Keshopur, Nakki Nagar",
+        "addressLocality": "Jamalpur",
+        "addressRegion": "Bihar",
+        "postalCode": "811214",
+        "addressCountry": "IN"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 25.3122,
+        "longitude": 86.4894
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+        "opens": "10:00",
+        "closes": "18:00"
+      },
+      "founder": {
+        "@type": "Person",
+        "name": "Shri Satish Kumar"
+      },
+      "foundingDate": "2017-09-26",
+      "description": "Registered Railway Contractor and MSME Micro Enterprise serving Eastern Railway.",
+      "areaServed": "Eastern Railway Zone"
+    }
+    </script>
 
     <style>
         /* --- 1. CSS VARIABLES & RESET --- */
@@ -272,7 +337,7 @@
             text-transform: uppercase;
         }
 
-        /* --- 6. LEGACY & HERITAGE SECTION (SLIDER UPDATED) --- */
+        /* --- 6. LEGACY & HERITAGE SECTION --- */
         .legacy-section {
             padding: var(--section-padding);
             background: #111;
@@ -315,26 +380,25 @@
             width: 100%;
             overflow-x: scroll;
             scroll-behavior: smooth;
-            /* Hide scrollbar styles */
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none;  /* IE 10+ */
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
         }
         
         .gallery-track-container::-webkit-scrollbar {
-            display: none; /* Chrome/Safari */
+            display: none;
         }
 
         .gallery-track {
             display: flex;
             gap: 20px;
-            width: max-content; /* Ensure container expands for children */
+            width: max-content;
         }
 
         .gallery-item {
             position: relative;
             height: 250px;
-            width: 350px; /* Fixed width for slider items */
-            flex: 0 0 auto; /* Prevent shrinking */
+            width: 350px;
+            flex: 0 0 auto;
             overflow: hidden;
             border-radius: 4px;
             border: 1px solid var(--border);
@@ -482,7 +546,14 @@
             font-weight: 600;
         }
 
-        /* --- 9. MAP SECTION --- */
+        /* --- 9. FAQ SECTION (ADDED) --- */
+        .faq-section { padding: var(--section-padding); background: var(--bg-dark); border-top: 1px solid var(--border); }
+        .faq-grid { max-width: 800px; margin: 0 auto; }
+        .faq-item { margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+        .faq-item h4 { color: var(--gold); margin-bottom: 10px; font-size: 1.1rem; }
+        .faq-item p { color: var(--text-muted); font-size: 0.95rem; }
+
+        /* --- 10. MAP SECTION --- */
         .map-section {
             width: 100%;
             height: 450px;
@@ -497,7 +568,7 @@
             filter: grayscale(100%) invert(90%);
         }
 
-        /* --- 10. FOOTER & CONTACT --- */
+        /* --- 11. FOOTER & CONTACT --- */
         .footer {
             background: #000;
             padding: 80px 0 30px;
@@ -658,27 +729,27 @@
                 <div class="gallery-track-container" id="sliderTrack">
                     <div class="gallery-track">
                         <div class="gallery-item">
-                            <img src="https://imgs.search.brave.com/XQLbl8nT4dDi2INHsCSW_i2WWCnUE7qGCErDITKjHp0/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pbmNy/ZWRpYmxlbXVuZ2Vy/YmloYXIud29yZHBy/ZXNzLmNvbS93cC1j/b250ZW50L3VwbG9h/ZHMvMjAyMi8wOS81/N2NiMi1uYXRpdmUt/d29ya21lbi1sZWF2/aW5nLXdvcmtzaG9w/cy1hZnRlci13b3Jr/LXRoZS1qYW1hbHB1/ci1yYWlsd2F5LXdv/cmtzaG9wcy1pbi0x/ODk3LnBuZw" alt="Ancient Jamalpur Workshop">
+                            <img src="https://imgs.search.brave.com/XQLbl8nT4dDi2INHsCSW_i2WWCnUE7qGCErDITKjHp0/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pbmNy/ZWRpYmxlbXVuZ2Vy/YmloYXIud29yZHBy/ZXNzLmNvbS93cC1j/b250ZW50L3VwbG9h/ZHMvMjAyMi8wOS81/N2NiMi1uYXRpdmUt/d29ya21lbi1sZWF2/aW5nLXdvcmtzaG9w/cy1hZnRlci13b3Jr/LXRoZS1qYW1hbHB1/ci1yYWlsd2F5LXdv/cmtzaG9wcy1pbi0x/ODk3LnBuZw" alt="Ancient Jamalpur Workshop" loading="lazy">
                             <div class="gallery-caption">Historic Workforce (1897)</div>
                         </div>
                         <div class="gallery-item">
-                            <img src="https://imgs.search.brave.com/UHrQgSbmJGffTPeH_KSqju0usE5D0UZ9RAFlKSJUaIU/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pbS5o/dW50LmluL2NnL0ph/bWFscHVyL0NpdHkt/R3VpZGUvbTFtLWph/bWFsLmpwZw" alt="Jamalpur workshop">
+                            <img src="https://imgs.search.brave.com/UHrQgSbmJGffTPeH_KSqju0usE5D0UZ9RAFlKSJUaIU/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pbS5o/dW50LmluL2NnL0ph/bWFscHVyL0NpdHkt/R3VpZGUvbTFtLWph/bWFsLmpwZw" alt="Jamalpur workshop" loading="lazy">
                             <div class="gallery-caption">Jamalpur Workshop Facade</div>
                         </div>
                         <div class="gallery-item">
-                            <img src="https://imgs.search.brave.com/BSYkyNBfBmN5y1AsTJ6d9OlVsK448_-YGAPOWMgtfmQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMuaGluZHVzdGFu/dGltZXMuY29tL2lt/Zy8yMDIyLzAxLzI5/LzU1MHgzMDkvZmEz/MGI4YmMtODEyMi0x/MWVjLWI2Y2MtMGUz/MzYyZDEwOTg4XzE2/NDM0NzUxODc0MzYu/anBn" alt="Railway Tunnel">
+                            <img src="https://imgs.search.brave.com/BSYkyNBfBmN5y1AsTJ6d9OlVsK448_-YGAPOWMgtfmQ/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMuaGluZHVzdGFu/dGltZXMuY29tL2lt/Zy8yMDIyLzAxLzI5/LzU1MHgzMDkvZmEz/MGI4YmMtODEyMi0x/MWVjLWI2Y2MtMGUz/MzYyZDEwOTg4XzE2/NDM0NzUxODc0MzYu/anBn" alt="Railway Tunnel" loading="lazy">
                             <div class="gallery-caption">Jamalpur Railway Tunnel</div>
                         </div>
                         <div class="gallery-item">
-                            <img src="https://imgs.search.brave.com/pfyNHj3u9P6XxAX6vwsfarlulgFRO7ZB8DCJPQZuYSs/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pbmNy/ZWRpYmxlbXVuZ2Vy/YmloYXIud29yZHBy/ZXNzLmNvbS93cC1j/b250ZW50L3VwbG9h/ZHMvMjAyMi8wOS83/NzM2NS10aGUtdHVy/bmluZy1zaG9wLmpw/Zw" alt="Railway Tracks">
+                            <img src="https://imgs.search.brave.com/pfyNHj3u9P6XxAX6vwsfarlulgFRO7ZB8DCJPQZuYSs/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pbmNy/ZWRpYmxlbXVuZ2Vy/YmloYXIud29yZHBy/ZXNzLmNvbS93cC1j/b250ZW50L3VwbG9h/ZHMvMjAyMi8wOS83/NzM2NS10aGUtdHVy/bmluZy1zaG9wLmpw/Zw" alt="Railway Tracks" loading="lazy">
                             <div class="gallery-caption">Wheelshop</div>
                         </div>
                         <div class="gallery-item">
-                            <img src="https://imgs.search.brave.com/GDQoh6lsjxD8N-eN3ihZZkkZ0nO8RxEgUKPjuZS05o8/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pbmNy/ZWRpYmxlbXVuZ2Vy/YmloYXIud29yZHBy/ZXNzLmNvbS93cC1j/b250ZW50L3VwbG9h/ZHMvMjAyMi8wOS9i/NmEzYy1kZmRmZC5q/cGc" alt="Steam Engine">
+                            <img src="https://imgs.search.brave.com/GDQoh6lsjxD8N-eN3ihZZkkZ0nO8RxEgUKPjuZS05o8/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pbmNy/ZWRpYmxlbXVuZ2Vy/YmloYXIud29yZHBy/ZXNzLmNvbS93cC1j/b250ZW50L3VwbG9h/ZHMvMjAyMi8wOS9i/NmEzYy1kZmRmZC5q/cGc" alt="Steam Engine" loading="lazy">
                             <div class="gallery-caption">Heritage Steam Loco</div>
                         </div>
                          <div class="gallery-item">
-                            <img src="https://imgs.search.brave.com/ANV4fS9KwJIfDuPDd_NU0RYT_RQ_AbInVml0ggAtS9c/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pbmNy/ZWRpYmxlbXVuZ2Vy/YmloYXIud29yZHBy/ZXNzLmNvbS93cC1j/b250ZW50L3VwbG9h/ZHMvMjAyMi8wOS9j/NWM3OC1zc2RzZC5q/cGc" alt="Locomotive Shed">
+                            <img src="https://imgs.search.brave.com/ANV4fS9KwJIfDuPDd_NU0RYT_RQ_AbInVml0ggAtS9c/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pbmNy/ZWRpYmxlbXVuZ2Vy/YmloYXIud29yZHBy/ZXNzLmNvbS93cC1j/b250ZW50L3VwbG9h/ZHMvMjAyMi8wOS9j/NWM3OC1zc2RzZC5q/cGc" alt="Locomotive Shed" loading="lazy">
                             <div class="gallery-caption">Modern Diesel Shed</div>
                         </div>
                     </div>
@@ -758,8 +829,31 @@
         </div>
     </section>
 
+    <section id="faq" class="faq-section">
+        <div class="container">
+            <div class="text-center section-title">
+                <h2>Frequent Inquiries</h2>
+            </div>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <h4>Is Hind Traders a registered Railway Contractor?</h4>
+                    <p>Yes, Hind Traders is a registered proprietary firm and MSME Micro Enterprise (UDYAM-BR-22-0005736) actively participating in Eastern Railway tenders.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>Where is Hind Traders located?</h4>
+                    <p>We are based in Jamalpur, Munger, Bihar, a strategic hub for the Eastern Railway, enabling us to provide efficient supply chain solutions.</p>
+                </div>
+                <div class="faq-item">
+                    <h4>What materials do you supply?</h4>
+                    <p>We supply a wide range of railway-approved materials, including mechanical components, hardware, and consumables as per RDSO specifications.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section id="location" class="map-section">
         <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3610.1786539266!2d86.4916!3d25.3176!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39f1f0b000000001%3A0x0!2sJamalpur%2C%20Bihar!5e0!3m2!1sen!2sin!4v1600000000000!5m2!1sen!2sin" 
+            title="Hind Traders Location in Jamalpur"
             width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
         </iframe>
     </section>
@@ -789,7 +883,7 @@
                         </li>
                         <li>
                             <i class="fas fa-envelope"></i>
-                            <a href="mailto:hindtraders19699@gmail.com" style="color: var(--text-muted); text-decoration: none;">hindtraders19699@gmail.com</a>
+                            <a href="mailto:contact@hindtraders.in" style="color: var(--text-muted); text-decoration: none;">contact@hindtraders.in</a>
                         </li>
                     </ul>
                 </div>
@@ -808,7 +902,7 @@
             </div>
 
             <div class="footer-bottom">
-                <p>© 2024 Hind Traders. All Rights Reserved. | Designed for Railway Compliance.</p>
+                <p>© 2026 Hind Traders. All Rights Reserved. | Designed for Railway Compliance.</p>
             </div>
         </div>
     </footer>
