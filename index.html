@@ -196,6 +196,71 @@
         .signature strong { display: block; color: var(--accent); font-size: 1.1rem; font-family: 'Playfair Display', serif; }
         .signature span { color: var(--text-muted); font-size: 0.9rem; }
 
+        .leaders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-top: 40px;
+        }
+        .leader-card {
+            background: #141414;
+            border: 1px solid #333;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .leader-card:hover {
+            border-color: var(--gold);
+            transform: translateY(-5px);
+        }
+        .leader-img {
+            height: 350px;
+            width: 100%;
+            overflow: hidden;
+            border-bottom: 2px solid var(--gold);
+        }
+        .leader-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top;
+            filter: grayscale(100%);
+            transition: 0.5s;
+        }
+        .leader-card:hover .leader-img img {
+            filter: grayscale(0%);
+            transform: scale(1.05);
+        }
+        .leader-info {
+            padding: 30px;
+            text-align: center;
+        }
+        .leader-info small {
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.7rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .leader-info h3 {
+            color: #fff;
+            margin-bottom: 5px;
+            font-size: 1.5rem;
+        }
+        .leader-info .role {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .leader-info .bio {
+            color: #ccc;
+            font-style: italic;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
         /* --- LEGACY --- */
         .legacy-section { padding: var(--section-padding); background: #111; border-top: 1px solid var(--border); }
         .legacy-content { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; margin-bottom: 50px; }
@@ -374,22 +439,37 @@
         </div>
     </section>
 
-    <section id="director" class="director-section">
+    <section id="leadership" class="director-section">
         <div class="container">
-           <div class="director-grid">
-               <div class="director-img-wrapper">
-                   <img src="https://res.cloudinary.com/dlssjncyo/image/upload/v1769936536/Gemini_Generated_Image_umc143umc143umc1_1_fx5ycw.png" alt="Shri Satish Kumar - Proprietor">
-               </div>
-               <div class="director-content">
-                   <small>The Leadership</small>
-                   <h3>Message from the Proprietor</h3>
-                   <p>"At Hind Traders, our mission goes beyond mere supply; we aim to be the backbone of efficiency for the Eastern Railway. We understand that every component we supply and every project we execute plays a vital role in the safety and punctuality of Indian Railways. We are committed to absolute transparency, timely delivery, and uncompromised quality."</p>
-                   <div class="signature">
-                       <strong>Shri Satish Kumar</strong><br>
-                       <span>Proprietor, Hind Traders</span>
-                   </div>
-               </div>
-           </div>
+            <div class="text-center section-title">
+                <h2>Our Leadership</h2>
+            </div>
+            
+            <div class="leaders-grid">
+                <div class="leader-card">
+                    <div class="leader-img">
+                        <img src="https://res.cloudinary.com/dlssjncyo/image/upload/v1769936536/Gemini_Generated_Image_umc143umc143umc1_1_fx5ycw.png" alt="Shri Satish Kumar">
+                    </div>
+                    <div class="leader-info">
+                        <small>The Foundation</small>
+                        <h3>Shri Satish Kumar</h3>
+                        <p class="role">Proprietor</p>
+                        <p class="bio">"For over 15 years, my focus has been simple: Integrity above all. We don't just supply materials; we supply trust to the Indian Railways."</p>
+                    </div>
+                </div>
+
+                <div class="leader-card">
+                    <div class="leader-img">
+                        <img src="https://res.cloudinary.com/dlssjncyo/image/upload/v1769946618/WhatsApp_Image_2026-02-01_at_5.12.59_PM-geotagged_xnauiy.jpg" alt="Tejash Kr - Digital Operations">
+                    </div>
+                    <div class="leader-info">
+                        <small>The Future</small>
+                        <h3>Tejash Kr</h3>
+                        <p class="role">Head of Digital Operations</p>
+                        <p class="bio">"Bridging the gap between traditional contracting and modern efficiency. I ensure Hind Traders leverages digital tools for faster tenders and transparent logistics."</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
