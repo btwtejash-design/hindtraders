@@ -10,7 +10,7 @@
     </script>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <title>Hind Traders | Registered Railway Contractor & MSME in Jamalpur</title>
     <meta name="description" content="Hind Traders (Est. 2007) is a government-approved Railway Contractor and MSME Micro Enterprise in Jamalpur, Bihar. We specialize in railway material supply, tender execution, and infrastructure works for Eastern Railway.">
@@ -77,20 +77,33 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
-        body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); color: var(--text-main); line-height: 1.7; overflow-x: hidden; }
+        
+        /* FIX: Prevent Horizontal Scroll on Body */
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            background-color: var(--bg-dark); 
+            color: var(--text-main); 
+            line-height: 1.7; 
+            width: 100%;
+            overflow-x: hidden; 
+            position: relative;
+        }
+
+        img { max-width: 100%; height: auto; display: block; }
+
         h1, h2, h3, h4 { font-family: 'Playfair Display', serif; color: var(--accent); line-height: 1.3; }
         a { text-decoration: none; transition: 0.3s; }
         ul { list-style: none; }
 
         /* --- UTILITIES --- */
-        .container { max-width: var(--container-width); margin: 0 auto; padding: 0 20px; }
+        .container { max-width: var(--container-width); margin: 0 auto; padding: 0 20px; width: 100%; }
         .text-center { text-align: center; }
         .section-title { margin-bottom: 60px; position: relative; display: inline-block; }
         .section-title h2 { font-size: 2.5rem; text-transform: uppercase; letter-spacing: 2px; }
         .section-title::after { content: ''; display: block; width: 60px; height: 3px; background: var(--accent); margin: 15px auto 0; }
 
         /* --- BUTTONS --- */
-        .btn, .btn-outline { display: inline-block; padding: 12px 30px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border: 1px solid var(--accent); transition: 0.3s; cursor: pointer; }
+        .btn, .btn-outline { display: inline-block; padding: 12px 30px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border: 1px solid var(--accent); transition: 0.3s; cursor: pointer; text-align: center; }
         .btn { background: var(--accent); color: var(--bg-dark); }
         .btn:hover { background: transparent; color: var(--accent); }
         .btn-outline { background: transparent; color: var(--accent); }
@@ -98,35 +111,63 @@
         .btn-small { padding: 8px 20px; font-size: 0.8rem; }
 
         /* --- HEADER & NAV --- */
-        header { position: fixed; top: 0; width: 100%; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(10px); z-index: 1000; border-bottom: 1px solid var(--border); padding: 15px 0; }
+        header { position: fixed; top: 0; width: 100%; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(10px); z-index: 1000; border-bottom: 1px solid var(--border); padding: 12px 0; }
         .nav-flex { display: flex; justify-content: space-between; align-items: center; }
         .logo-area { display: flex; align-items: center; gap: 15px; }
-        .logo-img { height: 50px; width: auto; filter: invert(1); }
-        .brand-name { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; letter-spacing: 1px; color: var(--accent); }
-        .brand-tagline { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; display: block; font-family: 'Montserrat', sans-serif; }
+        .logo-img { height: 40px; width: auto; filter: invert(1); }
+        .brand-name { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; letter-spacing: 1px; color: var(--accent); white-space: nowrap; }
+        .brand-tagline { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; display: block; font-family: 'Montserrat', sans-serif; }
         .nav-links { display: flex; gap: 30px; }
         .nav-links a { color: var(--text-main); font-size: 0.9rem; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
         .nav-links a:hover { color: var(--gold); }
         .mobile-menu-btn { display: none; color: var(--accent); font-size: 1.5rem; cursor: pointer; }
 
-        /* --- NEWS TICKER --- */
-        .news-ticker-container { background: #000; border-bottom: 1px solid #333; height: 40px; overflow: hidden; display: flex; align-items: center; margin-top: 81px; }
-        .ticker-label { background: var(--gold); color: #000; padding: 0 15px; height: 100%; display: flex; align-items: center; font-weight: 700; font-size: 0.8rem; z-index: 2; }
-        .ticker-wrap { width: 100%; overflow: hidden; white-space: nowrap; }
+        /* --- NEWS TICKER (FIXED MARGIN & ALIGNMENT) --- */
+        .news-ticker-container { 
+            background: #000; 
+            border-bottom: 1px solid #333; 
+            height: 40px; 
+            overflow: hidden; 
+            display: flex; 
+            align-items: center; 
+            margin-top: 76px; /* INCREASED from 71px to 76px to prevent overlap */
+            width: 100%; 
+        }
+        .ticker-label { 
+            background: var(--gold); 
+            color: #000; 
+            padding: 0 15px; 
+            height: 100%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: 700; 
+            font-size: 0.8rem; 
+            z-index: 2; 
+            flex-shrink: 0;
+            letter-spacing: 1px;
+        }
+        .ticker-wrap { width: 100%; overflow: hidden; white-space: nowrap; display: flex; align-items: center; height: 100%; }
         .ticker-move { display: inline-block; white-space: nowrap; animation: ticker 30s linear infinite; }
-        .ticker-item { display: inline-block; padding: 0 30px; color: #fff; font-size: 0.9rem; border-right: 1px solid #333; }
+        .ticker-item { display: inline-block; padding: 0 20px; color: #fff; font-size: 0.9rem; border-right: 1px solid #333; vertical-align: middle; }
         @keyframes ticker { 0% { transform: translate3d(100%, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
         /* --- HERO --- */
-        .hero { padding-top: 40px !important; height: 100vh; background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url('https://res.cloudinary.com/dlssjncyo/image/upload/v1769883629/Gemini_Generated_Image_qbh0z0qbh0z0qbh0_jni8f2.png'); background-size: cover; background-position: center; display: flex; align-items: center; text-align: center; }
-        .hero-content { max-width: 800px; margin: 0 auto; animation: fadeIn Up 1s ease-out; }
+        .hero { 
+            padding-top: 40px !important; min-height: 100vh; width: 100%;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url('https://res.cloudinary.com/dlssjncyo/image/upload/v1769883629/Gemini_Generated_Image_qbh0z0qbh0z0qbh0_jni8f2.png'); 
+            background-size: cover; background-position: center; display: flex; align-items: center; text-align: center; 
+        }
+        .hero-content { max-width: 800px; margin: 0 auto; animation: fadeIn Up 1s ease-out; width: 100%; }
         .hero-badge { display: inline-block; background: rgba(255,255,255,0.1); padding: 8px 16px; border-radius: 50px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 20px; border: 1px solid var(--border); }
         .hero h1 { font-size: 3.5rem; margin-bottom: 20px; color: var(--accent); }
         .hero p { font-size: 1.2rem; color: var(--text-main); margin-bottom: 40px; font-weight: 300; }
+        .hero-buttons { margin-top: 30px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
 
-        /* --- NEWS CARDS SECTION --- */
+        /* --- SECTIONS GENERAL --- */
+        section { width: 100%; overflow: hidden; } 
         .news-section { padding: var(--section-padding); background: var(--bg-dark); border-bottom: 1px solid var(--border); }
-        .news-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 30px; }
+        .news-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin-top: 30px; }
         .news-card { background: var(--bg-panel); border: 1px solid var(--border); padding: 30px; transition: 0.3s; border-left: 3px solid var(--gold); position: relative; overflow: hidden; }
         .news-card:hover { transform: translateY(-5px); border-color: var(--accent); }
         .news-date { font-size: 0.75rem; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block; font-weight: 600; }
@@ -134,7 +175,6 @@
         .news-card p { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; }
         .loading-text { text-align: center; width: 100%; color: var(--text-muted); font-style: italic; }
 
-        /* --- ABOUT & STATS --- */
         .about-section { padding: var(--section-padding); background: var(--bg-dark); border-bottom: 1px solid var(--border); }
         .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: center; }
         .about-text h3 { font-size: 1.8rem; margin-bottom: 20px; color: var(--gold); }
@@ -143,11 +183,11 @@
         .stat-number { font-size: 2rem; font-weight: 700; color: var(--accent); display: block; }
         .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; }
 
-        /* --- NEW: DIRECTOR'S MESSAGE SECTION --- */
+        /* --- DIRECTOR SECTION --- */
         .director-section { padding: var(--section-padding); background: #0f0f0f; border-bottom: 1px solid var(--border); }
         .director-grid { display: grid; grid-template-columns: 350px 1fr; gap: 50px; align-items: center; }
         .director-img-wrapper { position: relative; border: 1px solid var(--gold); padding: 10px; }
-        .director-img-wrapper img { width: 100%; height: auto; display: block; filter: grayscale(100%); transition: 0.5s; }
+        .director-img-wrapper img { width: 100%; height: auto; filter: grayscale(100%); transition: 0.5s; }
         .director-img-wrapper:hover img { filter: grayscale(0%); }
         .director-content small { color: var(--gold); text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; display: block; margin-bottom: 10px; }
         .director-content h3 { font-size: 2rem; margin-bottom: 25px; color: var(--accent); }
@@ -156,24 +196,29 @@
         .signature strong { display: block; color: var(--accent); font-size: 1.1rem; font-family: 'Playfair Display', serif; }
         .signature span { color: var(--text-muted); font-size: 0.9rem; }
 
-        /* --- LEGACY, SLIDER, SERVICES, CREDENTIALS --- */
+        /* --- LEGACY --- */
         .legacy-section { padding: var(--section-padding); background: #111; border-top: 1px solid var(--border); }
         .legacy-content { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; margin-bottom: 50px; }
         .legacy-text h3 { color: var(--accent); font-size: 1.8rem; margin-bottom: 15px; }
         .legacy-text .highlight { color: var(--gold); font-weight: 600; }
-        .external-links { display: flex; gap: 15px; margin-top: 25px; }
+        .external-links { display: flex; gap: 15px; margin-top: 25px; flex-wrap: wrap; }
 
+        /* --- GALLERY --- */
         .gallery-wrapper { position: relative; width: 100%; margin-top: 40px; }
         .gallery-track-container { width: 100%; overflow-x: scroll; scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none; }
         .gallery-track-container::-webkit-scrollbar { display: none; }
         .gallery-track { display: flex; gap: 20px; width: max-content; }
-        .gallery-item { position: relative; height: 250px; width: 350px; flex: 0 0 auto; overflow: hidden; border-radius: 4px; border: 1px solid var(--border); }
+        .gallery-item { 
+            position: relative; height: 250px; 
+            width: 350px; 
+            flex: 0 0 auto; overflow: hidden; border-radius: 4px; border: 1px solid var(--border); 
+        }
         .gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s, filter 0.5s; filter: grayscale(100%); }
         .gallery-item:hover img { transform: scale(1.1); filter: grayscale(0%); }
         .gallery-caption { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.7); color: white; padding: 8px 15px; font-size: 0.8rem; transform: translateY(100%); transition: transform 0.3s; }
         .gallery-item:hover .gallery-caption { transform: translateY(0); }
         .slider-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0, 0, 0, 0.8); border: 1px solid var(--border); color: var(--accent); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; }
-        .prev-btn { left: -25px; } .next-btn { right: -25px; }
+        .prev-btn { left: 10px; } .next-btn { right: 10px; }
 
         .services-section { padding: var(--section-padding); background: var(--bg-panel); border-top: 1px solid var(--border); }
         .service-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
@@ -184,32 +229,25 @@
         .service-card p { color: var(--text-muted); font-size: 0.95rem; }
 
         .credentials-section { padding: var(--section-padding); }
-        .cred-wrapper { background: var(--bg-panel); border: 1px solid var(--border); padding: 20px; overflow-x: auto; }
+        .cred-wrapper { background: var(--bg-panel); border: 1px solid var(--border); padding: 20px; overflow-x: auto; width: 100%; }
         table { width: 100%; border-collapse: collapse; min-width: 600px; }
         th, td { text-align: left; padding: 15px 20px; border-bottom: 1px solid var(--border); }
         th { color: var(--accent); font-family: 'Playfair Display', serif; font-size: 1.1rem; }
         td { color: var(--text-muted); }
         .status-badge { background: rgba(0, 255, 128, 0.1); color: #4caf50; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
 
-        /* --- NEW: ECOSYSTEM LINKS SECTION --- */
         .ecosystem-section { padding: 40px 0; background: #111; border-top: 1px solid var(--border); }
         .eco-grid { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 30px; }
-        .eco-card {
-            display: flex; align-items: center; gap: 15px; padding: 15px 30px;
-            background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-main);
-            transition: 0.3s; min-width: 200px;
-        }
+        .eco-card { display: flex; align-items: center; gap: 15px; padding: 15px 30px; background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-main); transition: 0.3s; min-width: 200px; }
         .eco-card:hover { border-color: var(--gold); transform: translateY(-3px); }
         .eco-card i { color: var(--gold); font-size: 1.5rem; }
         .eco-card span { font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 0.9rem; }
 
-        /* --- DOWNLOADS --- */
         .downloads-section { background: var(--bg-dark); padding: 60px 0; border-top: 1px solid #333; }
         .download-container { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
-        .download-card { background: #1a1a1a; padding: 20px; border: 1px solid #333; width: 300px; text-align: center; }
+        .download-card { background: #1a1a1a; padding: 20px; border: 1px solid #333; width: 100%; max-width: 300px; text-align: center; }
         .download-icon { font-size: 3rem; margin-bottom: 15px; }
 
-        /* --- FAQ --- */
         .faq-section { padding: var(--section-padding); background: var(--bg-dark); border-top: 1px solid var(--border); }
         .faq-grid { max-width: 800px; margin: 0 auto; }
         .faq-item { margin-bottom: 20px; border: 1px solid var(--border); background: var(--bg-panel); border-radius: 4px; overflow: hidden; }
@@ -267,6 +305,7 @@
             <nav>
                 <ul class="nav-links">
                     <li><a href="#home">Home</a></li>
+                    <li><a href="#news-updates">News</a></li>
                     <li><a href="#about">About</a></li>
                     <li><a href="#services">Services</a></li>
                     <li><a href="#compliance">Credentials</a></li>
@@ -293,9 +332,10 @@
             <span class="hero-badge">Est. 2007 • Jamalpur, Bihar</span>
             <h1>Engineering Excellence for Indian Railways</h1>
             <p>A registered MSME Micro Enterprise specializing in the supply of railway materials and infrastructure works for the Eastern Railway zone.</p>
-            <div style="margin-top: 30px;">
+            
+            <div class="hero-buttons">
                 <a href="#contact" class="btn">Vendor Inquiries</a>
-                <a href="#services" class="btn-outline" style="margin-left: 15px;">Our Services</a>
+                <a href="#services" class="btn-outline">Our Services</a>
             </div>
         </div>
     </section>
