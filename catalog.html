@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Catalogue | Hind Traders</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-dark: #0a0a0a; --bg-panel: #141414; --accent: #ffffff;
+            --text-main: #e0e0e0; --text-muted: #a0a0a0; --border: #333333;
+            --gold: #d4af37;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Montserrat', sans-serif; background-color: var(--bg-dark); color: var(--text-main); line-height: 1.6; }
+
+        /* HEADER */
+        header { background: #000; padding: 20px 0; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .nav-flex { display: flex; justify-content: space-between; align-items: center; }
+        .brand-name { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--gold); font-weight: 700; text-decoration: none; }
+        .back-btn { color: #fff; text-decoration: none; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+        .back-btn:hover { color: var(--gold); }
+
+        /* CATALOGUE GRID */
+        .catalogue-section { padding: 60px 0; }
+        .section-title { text-align: center; margin-bottom: 50px; }
+        .section-title h1 { font-family: 'Playfair Display', serif; font-size: 2.5rem; color: #fff; margin-bottom: 10px; }
+        .section-title p { color: var(--text-muted); }
+
+        .search-bar { 
+            max-width: 500px; margin: 0 auto 40px; position: relative; 
+        }
+        .search-bar input {
+            width: 100%; padding: 15px 20px 15px 50px; background: #1a1a1a; border: 1px solid #333;
+            color: #fff; border-radius: 50px; outline: none; font-family: 'Montserrat', sans-serif;
+        }
+        .search-bar input:focus { border-color: var(--gold); }
+        .search-bar i { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #666; }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .product-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .product-card:hover { transform: translateY(-5px); border-color: var(--gold); }
+        
+        .product-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 1px solid var(--border);
+            transition: 0.3s;
+        }
+        .product-card:hover .product-img { transform: scale(1.05); }
+        
+        .img-wrapper { overflow: hidden; height: 200px; width: 100%; }
+
+        .card-body { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; }
+
+        .cat-tag { 
+            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--gold); 
+            background: rgba(212, 175, 55, 0.1); padding: 4px 8px; border-radius: 4px; display: inline-block; margin-bottom: 10px; width: fit-content;
+        }
+        .product-desc { font-size: 0.95rem; color: #fff; font-weight: 500; margin-bottom: 15px; flex-grow: 1; }
+        
+        .inquire-btn {
+            background: transparent; border: 1px solid var(--gold); color: var(--gold);
+            padding: 10px; width: 100%; border-radius: 4px; cursor: pointer; font-size: 0.85rem; 
+            text-transform: uppercase; font-weight: 600; letter-spacing: 1px; transition: 0.3s; margin-top: auto;
+        }
+        .inquire-btn:hover { background: var(--gold); color: #000; }
+
+        /* CUSTOM REQUEST SECTION */
+        .custom-request-box {
+            background: linear-gradient(45deg, #111, #1a1a1a);
+            border: 1px dashed var(--gold);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin-top: 60px;
+        }
+        .custom-request-box h3 { color: #fff; margin-bottom: 10px; font-family: 'Playfair Display', serif; }
+        .custom-btn {
+            background: var(--gold); color: #000; padding: 12px 30px; border: none; border-radius: 50px;
+            font-weight: 700; margin-top: 20px; cursor: pointer; transition: 0.3s;
+        }
+        .custom-btn:hover { background: #fff; }
+
+        /* MODAL */
+        .modal {
+            display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.9); align-items: center; justify-content: center; backdrop-filter: blur(5px);
+            padding: 20px;
+            overflow-y: auto; /* Allow scrolling if modal is tall */
+        }
+        .modal-content {
+            background: #161616; padding: 30px; border-radius: 8px; width: 100%; max-width: 500px;
+            border: 1px solid var(--border); position: relative; box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+            margin: auto;
+        }
+        .close-modal { position: absolute; top: 15px; right: 20px; color: #888; cursor: pointer; font-size: 1.5rem; transition: 0.3s;}
+        .close-modal:hover { color: #fff; }
+        
+        .modal h3 { color: #fff; margin-bottom: 5px; font-family: 'Playfair Display', serif; }
+        .modal p { color: #888; font-size: 0.9rem; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 15px; }
+        
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; color: var(--gold); font-size: 0.75rem; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .input-group input, .input-group textarea { 
+            width: 100%; padding: 12px; background: #000; border: 1px solid #444; 
+            color: #fff; border-radius: 4px; font-family: 'Montserrat', sans-serif; font-size: 0.9rem;
+        }
+        .input-group input:focus, .input-group textarea:focus { outline: none; border-color: var(--gold); }
+        .row-group { display: flex; gap: 15px; }
+        .row-group .input-group { flex: 1; }
+
+        /* Fake File Input Styling */
+        .file-upload {
+            border: 1px dashed #444; padding: 10px; border-radius: 4px; background: #0a0a0a; text-align: center;
+        }
+        .file-note { font-size: 0.7rem; color: #666; display: block; margin-top: 5px; font-style: italic; }
+
+        .contact-options { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .contact-btn {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 12px; border-radius: 5px; text-decoration: none; font-weight: 600; transition: 0.3s;
+            cursor: pointer;
+        }
+        .btn-whatsapp { background: #25d366; color: #fff; }
+        .btn-whatsapp:hover { background: #1ebc57; }
+        .btn-email { background: #ea4335; color: #fff; }
+        .btn-email:hover { background: #d32f2f; }
+
+        @media(max-width: 768px) {
+            .section-title h1 { font-size: 2rem; }
+            .row-group { flex-direction: column; gap: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container nav-flex">
+            <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Home</a>
+            <a href="index.html" class="brand-name">HIND TRADERS</a>
+        </div>
+    </header>
+
+    <section class="catalogue-section">
+        <div class="container">
+            <div class="section-title">
+                <h1>Product Catalogue</h1>
+                <p>Browse our extensive history of supplied items. Click "Interested" to request a quote.</p>
+            </div>
+
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search items (e.g. Bolt, Valve, Makita)..." onkeyup="filterCatalogue()">
+            </div>
+
+            <div class="grid-container" id="catalogueGrid">
+                </div>
+
+            <div class="custom-request-box">
+                <h3>Can't find what you're looking for?</h3>
+                <p style="color: #aaa; margin-bottom: 20px;">We supply a vast range of railway and industrial items beyond this list.</p>
+                <button class="custom-btn" onclick="openCustomModal()">Request Custom Item</button>
+            </div>
+        </div>
+    </section>
+
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('contactModal')">&times;</span>
+            <h3>Request Quote</h3>
+            <p>Item: <span id="modalItemName" style="color:var(--gold);"></span></p>
+            
+            <div class="input-group">
+                <label>Required Quantity</label>
+                <input type="text" id="modalQty" placeholder="e.g. 500 Nos, 20 Sets..." onkeyup="updateStandardLinks()">
+            </div>
+
+            <div class="contact-options">
+                <a href="#" id="waLink" target="_blank" class="contact-btn btn-whatsapp">
+                    <i class="fab fa-whatsapp"></i> Chat on WhatsApp
+                </a>
+                <a href="#" id="mailLink" class="contact-btn btn-email">
+                    <i class="fas fa-envelope"></i> Request via Email
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="customModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('customModal')">&times;</span>
+            <h3>Custom Enquiry</h3>
+            <p>Provide details and we will arrange it for you.</p>
+            
+            <div class="input-group">
+                <label>Item Name *</label>
+                <input type="text" id="custName" placeholder="What do you need?">
+            </div>
+
+            <div class="row-group">
+                <div class="input-group">
+                    <label>Quantity *</label>
+                    <input type="text" id="custQty" placeholder="How many?">
+                </div>
+                <div class="input-group">
+                    <label>Material</label>
+                    <input type="text" id="custMat" placeholder="e.g. SS, Rubber">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Specification / Dimensions</label>
+                <input type="text" id="custSpec" placeholder="e.g. Drg No, Size, Make">
+            </div>
+
+            <div class="input-group">
+                <label>Description / Additional Notes</label>
+                <textarea id="custDesc" rows="2"></textarea>
+            </div>
+
+            <div class="input-group">
+                <label>Reference Photo (Optional)</label>
+                <div class="file-upload">
+                    <span style="color:#aaa; font-size:0.8rem;"><i class="fas fa-camera"></i> Attach Photo</span>
+                    <span class="file-note">* Please attach the photo manually in WhatsApp or Email after clicking send.</span>
+                </div>
+            </div>
+
+            <div class="contact-options">
+                <a href="#" onclick="sendCustomEnquiry('wa')" class="contact-btn btn-whatsapp">
+                    <i class="fab fa-whatsapp"></i> Send via WhatsApp
+                </a>
+                <a href="#" onclick="sendCustomEnquiry('mail')" class="contact-btn btn-email">
+                    <i class="fas fa-envelope"></i> Send via Email
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* --- SPECIFIC IMAGE MAPPING --- */
+        const products = [
+            // TOOLS & POWER TOOLS
+            { desc: "Ceramic Hot Air Gun ", cat: "Tools", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770024279/51H2ud-tO6L_wql1fs.webp" },
+            { desc: "Small Angle Grinders (220-240V)", cat: "Tools", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770024235/Makita_9557HNR_1_110V_Angle_Grinder___77757.1733305406_mtjdut.webp" },
+            { desc: "HAND PUNCH SET 0 TO 8 (6mm)", cat: "Tools", img: "https://res.cloudinary.com/dlssjncyo/image/upload/c_fill,ar_1:1/v1770023894/41SVbWY3o6L_dgb7du.webp" },
+            { desc: "Heavy duty double rib bench vice", cat: "Tools", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770024319/heavy-duty-bench-vice-double-rib-500x500_en83ql.webp" },
+            { desc: "Grinding Wheel", cat: "Consumables", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770024374/200-mm-x-25-mm-x-31-75-mm-carborundum-grinding-wheels-500x500_yl7075.webp" },
+            
+            // FASTENERS
+            { desc: "Bolt & Nylon Nut", cat: "Fasteners", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770024557/FAS.NYL.56632440_1668306897277_necpzz.webp" },
+            { desc: "High Tensile Bolt", cat: "Fasteners", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770024624/product-jpeg-1000x1000_q8ofx6.webp" },
+            { desc: "Stay Rod Bolt with Washer", cat: "Fasteners", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770024705/71qP_VvoDcL_dr3enn.webp" },
+            { desc: "High Tensile Square Head Drilled Bolt", cat: "Fasteners", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770024846/square-head-screw_bigkmg.webp" },
+            
+            // MECHANICAL
+            { desc: "Led Screw Guide Nut", cat: "Mechanical", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770024904/612LWhe3J2L_rdurcg.webp" },
+            { desc: "Rack Pinion", cat: "Mechanical", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770024942/download_mmmqrn.jpg" },
+            { desc: "PIN for Horizontal lever for BOXNHL (RDSO Drg)", cat: "Mechanical", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770024996/steel-taper-washer_s9smxb.jpg" },
+            
+            // ELECTRICAL
+            { desc: "Heat Shrinkable Sleeve", cat: "Electrical", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770025069/1728554628_sfrhx8.jpg" },
+            { desc: "Lug Terminal Female Type", cat: "Electrical", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770025292/download_o14fpg.jpg" },
+            { desc: "LED light", cat: "Electrical", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770025351/71UFJEB-fDL._AC_UF1000_1000_QL80__nsetvf.jpg" },
+            
+            // RUBBER & FABRICATION
+            { desc: "High Pressure Flexible Pneumatic Hose", cat: "Rubber", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770025389/download_zhjtjb.jpg" },
+            { desc: "Cork Sheet Gasket", cat: "Gaskets", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770025431/download_riica0.jpg" },
+            { desc: "Neoprene Rubber Gasket for Pneumatic Joints", cat: "Rubber", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770025458/download_ihbfnb.jpg" },
+            { desc: "M.S. Angle,", cat: "Raw Material", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770025475/download_qse4wr.jpg" },
+            { desc: "Stainless steel Alphabetical designer Letters", cat: "Fabrication", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770025492/download_doenqc.jpg" },
+            
+            // SAFETY & GENERAL
+            { desc: "PVC Wire Braided Discharge Hose For Fire Extinguisher", cat: "Safety", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770025513/download_qga62y.jpg" },
+            { desc: "Eye Protective power less white glass", cat: "Safety", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770025534/download_vuign3.jpg" },
+            { desc: "Eco Solvent Printed Vinyl Display Board", cat: "General", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770025549/download_rqsz1n.jpg" },
+            
+            // DEFAULTS
+            { desc: "Supply of Aluminum Tag for lifting tackle", cat: "Mechanical", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770025565/download_nyhebn.jpg" },
+            { desc: "Hose pipe clamp", cat: "Mechanical", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770025597/download_nyctvi.jpg" },
+            { desc: "Modified Oil Seal (Water Pump)", cat: "Spares", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770025617/download_zy91rn.jpg" },
+            { desc: "ANABOND Silicon Grease Grade 662", cat: "General", img: "https://res.cloudinary.com/dlssjncyo/image/upload/v1770025635/download_pwpl2h.jpg" }
+        ];
+
+        const grid = document.getElementById('catalogueGrid');
+        
+        // Modal 1 Vars
+        const modal1 = document.getElementById('contactModal');
+        const modalItemName = document.getElementById('modalItemName');
+        const modalQtyInput = document.getElementById('modalQty');
+        const waLink = document.getElementById('waLink');
+        const mailLink = document.getElementById('mailLink');
+        let currentItem = "";
+
+        // Modal 2 Vars
+        const modal2 = document.getElementById('customModal');
+
+        // Fallback Image Function
+        function getFallbackImage(cat) {
+            if(cat.includes("Tools")) return "https://images.unsplash.com/photo-1581147036324-c17ac41d1685?auto=format&fit=crop&q=80&w=400";
+            if(cat.includes("Fasteners")) return "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=400";
+            return "https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&q=80&w=400"; 
+        }
+
+        // RENDER GRID
+        function renderCatalogue(data) {
+            grid.innerHTML = '';
+            data.forEach(item => {
+                const imgSrc = item.img || getFallbackImage(item.cat);
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="img-wrapper">
+                        <img src="${imgSrc}" alt="${item.cat}" class="product-img">
+                    </div>
+                    <div class="card-body">
+                        <span class="cat-tag">${item.cat}</span>
+                        <div class="product-desc">${item.desc}</div>
+                        <button class="inquire-btn" onclick="openStandardModal('${item.desc.replace(/'/g, "\\'")}')">Interested?</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // FILTER LOGIC
+        function filterCatalogue() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = products.filter(item => 
+                item.desc.toLowerCase().includes(term) || 
+                item.cat.toLowerCase().includes(term)
+            );
+            renderCatalogue(filtered);
+        }
+
+        // --- STANDARD MODAL LOGIC ---
+        function openStandardModal(itemName) {
+            modal1.style.display = "flex";
+            currentItem = itemName;
+            modalItemName.textContent = itemName;
+            modalQtyInput.value = ""; 
+            updateStandardLinks(); // Reset
+        }
+
+        function updateStandardLinks() {
+            const qty = modalQtyInput.value.trim() || "Not Specified";
+            const waMsg = `Hello Hind Traders,\n\nI am interested in:\n*Item:* ${currentItem}\n*Required Quantity:* ${qty}\n\nPlease provide a quote.`;
+            waLink.href = `https://wa.me/916202416345?text=${encodeURIComponent(waMsg)}`;
+            
+            const mailSubject = `Quote Request: ${currentItem.substring(0, 20)}...`;
+            const mailBody = `Dear Team,%0D%0A%0D%0AI am interested in the following item:%0D%0AItem: ${currentItem}%0D%0ARequired Quantity: ${qty}%0D%0A%0D%0APlease provide availability and pricing.%0D%0A%0D%0ARegards,`;
+            mailLink.href = `mailto:enquiry@hindtraders.in?subject=${encodeURIComponent(mailSubject)}&body=${mailBody}`;
+        }
+
+        // --- CUSTOM MODAL LOGIC ---
+        function openCustomModal() {
+            modal2.style.display = "flex";
+        }
+
+        function sendCustomEnquiry(type) {
+            const name = document.getElementById('custName').value || "Custom Item";
+            const qty = document.getElementById('custQty').value || "Not Specified";
+            const mat = document.getElementById('custMat').value || "N/A";
+            const spec = document.getElementById('custSpec').value || "N/A";
+            const desc = document.getElementById('custDesc').value || "";
+
+            if(type === 'wa') {
+                const msg = `*CUSTOM ENQUIRY*\n\n*Item:* ${name}\n*Qty:* ${qty}\n*Material:* ${mat}\n*Spec:* ${spec}\n*Note:* ${desc}\n\n(Photo attached if any)`;
+                window.open(`https://wa.me/916202416345?text=${encodeURIComponent(msg)}`, '_blank');
+            } else {
+                const subject = `Custom Enquiry: ${name}`;
+                const body = `Dear Team,%0D%0A%0D%0AHere are the details for a custom requirement:%0D%0A%0D%0AItem: ${name}%0D%0AQuantity: ${qty}%0D%0AMaterial: ${mat}%0D%0ASpecification: ${spec}%0D%0ADescription: ${desc}%0D%0A%0D%0A(I have attached reference photos if available)%0D%0A%0D%0ARegards,`;
+                window.location.href = `mailto:enquiry@hindtraders.in?subject=${encodeURIComponent(subject)}&body=${body}`;
+            }
+        }
+
+        // --- GLOBAL CLOSE LOGIC ---
+        function closeModal(id) {
+            document.getElementById(id).style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal1) closeModal('contactModal');
+            if (event.target == modal2) closeModal('customModal');
+        }
+
+        // Initial Render
+        renderCatalogue(products);
+    </script>
+
+</body>
+</html>
