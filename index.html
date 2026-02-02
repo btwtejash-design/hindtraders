@@ -373,6 +373,180 @@
         background: var(--gold);
         color: #000;
     }
+    .archive-section {
+            background: #0b0b0b;
+            padding: 80px 0;
+            border-top: 1px solid #333;
+        }
+
+        /* Disclaimer Box */
+        .system-notice {
+            background: rgba(212, 175, 55, 0.05);
+            border-left: 4px solid var(--gold);
+            padding: 20px;
+            margin-bottom: 40px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            border-radius: 0 4px 4px 0;
+        }
+        .notice-icon {
+            font-size: 1.5rem;
+            color: var(--gold);
+            margin-top: 2px;
+        }
+        .notice-content strong {
+            display: block;
+            color: var(--gold);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .notice-content p {
+            color: #ccc;
+            font-size: 0.9rem;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        /* Terminal Window */
+        .data-terminal {
+            background: #141414;
+            border: 1px solid #333;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        /* Toolbar */
+        .terminal-toolbar {
+            background: #1f1f1f;
+            padding: 15px 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .search-group {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+        .search-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+        .search-group input {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #444;
+            padding: 12px 15px 12px 45px;
+            color: #fff;
+            border-radius: 4px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            transition: 0.3s;
+        }
+        .search-group input:focus { border-color: var(--gold); }
+
+        .stats-group {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #888;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        .blink {
+            width: 8px; height: 8px;
+            background: #2ecc71;
+            border-radius: 50%;
+            animation: blinker 1.5s linear infinite;
+        }
+        @keyframes blinker { 50% { opacity: 0; } }
+
+        /* Header Row */
+        .table-header-row {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr 1fr;
+            padding: 15px 25px;
+            background: #1a1a1a;
+            border-bottom: 1px solid #444;
+            color: var(--gold);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        /* Viewport (Scroll Area) */
+        .terminal-viewport {
+            max-height: 500px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #444 #141414;
+        }
+        .terminal-viewport::-webkit-scrollbar { width: 8px; }
+        .terminal-viewport::-webkit-scrollbar-track { background: #141414; }
+        .terminal-viewport::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+
+        /* Data Rows */
+        .data-row {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr 1fr;
+            padding: 15px 25px;
+            border-bottom: 1px solid #252525;
+            align-items: center;
+            transition: 0.2s;
+        }
+        .data-row:hover { background: #1f1f1f; }
+        .data-row:last-child { border-bottom: none; }
+
+        .col-desc { color: #e0e0e0; font-size: 0.95rem; line-height: 1.5; padding-right: 15px; }
+        .col-desc small { display: block; color: #888; font-size: 0.8rem; margin-top: 4px; }
+        .col-cat { color: #aaa; font-size: 0.85rem; }
+        .col-qty { color: #fff; font-weight: 600; font-size: 0.9rem; }
+        .col-stat { text-align: right; }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+        .badge.delivered { background: rgba(46, 204, 113, 0.15); color: #2ecc71; }
+        .badge.legacy { background: rgba(155, 89, 182, 0.15); color: #9b59b6; }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .table-header-row { display: none; } /* Hide header on mobile */
+            .data-row {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                padding: 20px;
+            }
+            .col-desc { font-size: 1rem; padding: 0; }
+            .col-cat, .col-qty, .col-stat { font-size: 0.85rem; color: var(--gold); }
+            .col-stat { width: 100%; text-align: left; margin-top: 5px; }
+        }
     </style>
 </head>
 <body>
@@ -398,6 +572,7 @@
                     <li><a href="#news-updates">News</a></li>
                     <li><a href="#about">About</a></li>
                     <li><a href="#services">Services</a></li>
+                    <li><a href="catalog.html">Catalogue</a></li>
                     <li><a href="#compliance">Credentials</a></li>
                     <li><a href="#contact">Contact</a></li>
                 </ul>
@@ -575,6 +750,45 @@
                 <div class="service-card"><i class="fas fa-train service-icon"></i><h3>Material Supply</h3><p>Procurement and delivery of approved railway hardware, mechanical components, and consumables.</p></div>
                 <div class="service-card"><i class="fas fa-hammer service-icon"></i><h3>Works Contracts</h3><p>Execution of railway works tenders involving maintenance support, depot logistics, and infrastructure upkeep.</p></div>
                 <div class="service-card"><i class="fas fa-file-contract service-icon"></i><h3>Tender Participation</h3><p>Active participant in IREPS E-Tendering for Supply, Works, and Lease categories.</p></div>
+            </div>
+        </div>
+    </section>
+    <section id="works" class="archive-section">
+        <div class="container">
+            <div class="text-center section-title">
+                <h2>Project Execution Archive</h2>
+                <p style="color: var(--text-muted); margin-top: -30px;">A partial record of supply chain operations & infrastructure works.</p>
+            </div>
+
+            <div class="system-notice">
+                <div class="notice-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="notice-content">
+                    <strong>ARCHIVE INTEGRITY NOTICE:</strong>
+                    <p>This database represents a digitized segment of Hind Traders' operational history (Est. 2007). Physical records from 2007-2022 are currently undergoing digitization and archival retrieval. Consequently, this list is <u>not exhaustive</u> and excludes numerous offline contracts.</p>
+                </div>
+            </div>
+
+            <div class="data-terminal">
+                <div class="terminal-toolbar">
+                    <div class="search-group">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="dbSearch" placeholder="Search database (e.g., 'Valve', 'Bolt', 'Makita')..." onkeyup="filterDatabase()">
+                    </div>
+                    <div class="stats-group">
+                        <span id="totalRecords">Initializing...</span>
+                        <div class="status-indicator"><span class="blink"></span> LIVE</div>
+                    </div>
+                </div>
+
+                <div class="table-header-row">
+                    <div class="col-desc">Item / Work Description</div>
+                    <div class="col-cat">Category</div>
+                    <div class="col-qty">Qty</div>
+                    <div class="col-stat">Status</div>
+                </div>
+
+                <div class="terminal-viewport" id="databaseRows">
+                    </div>
             </div>
         </div>
     </section>
@@ -902,6 +1116,125 @@
         var scrolled = (winScroll / height) * 100;
         document.getElementById("myBar").style.width = scrolled + "%";
     }
+    const database = [
+                { desc: "Supply of Aluminum Tag for lifting tackle as per Sketch no.- MTS/07/01", cat: "Mechanical", qty: "500 Nos", type: "delivered" },
+                { desc: "Led Screw Guide Nut (Gun Metal) OD-86mm, ID-36mm, Length-180mm", cat: "Mechanical", qty: "1 No", type: "delivered" },
+                { desc: "Rack Pinion (Gun Metal) OD-50mm, ID-24mm, Length-58mm", cat: "Mechanical", qty: "1 No", type: "delivered" },
+                { desc: "MAKITA Ceramic Hot Air Gun (GEMC-511687766484423)", cat: "Tools", qty: "4 Nos", type: "delivered" },
+                { desc: "Hose pipe clamp (ring type) for compressor Air intake filter", cat: "Mechanical", qty: "200 Nos", type: "delivered" },
+                { desc: "Boot joint clamp for Turbo super charger", cat: "Mechanical", qty: "50 Nos", type: "delivered" },
+                { desc: "Dummy plug 1-1/2\" O.D. (Indigenous Make)", cat: "Mechanical", qty: "150 Nos", type: "delivered" },
+                { desc: "PIN for Horizontal lever for BOXNHL (RDSO Drg.no WD-08008-S-19)", cat: "Mechanical", qty: "1600 Nos", type: "delivered" },
+                { desc: "M.S. Angle, Size 30 x 30 x 6 mm (IS:2062 / 2011)", cat: "Raw Material", qty: "2000 Kg", type: "delivered" },
+                { desc: "Bolt & Nylon Nut 5/8\" (Make: Unbrako)", cat: "Fasteners", qty: "550 Sets", type: "delivered" },
+                { desc: "Allen Bolt Set (1/4\" x 1\" & 1/4\" x 2\") Make: Unbrako", cat: "Fasteners", qty: "400 Sets", type: "delivered" },
+                { desc: "Grinding Wheel 150mm x 25mm x 16mm (Make: Carborundum)", cat: "Consumables", qty: "150 Nos", type: "delivered" },
+                { desc: "Heat Shrinkable Sleeve (Polyolefin) 15 Kv/mm (Yellow, Red, Blue)", cat: "Electrical", qty: "100 Sets", type: "delivered" },
+                { desc: "Lug Terminal Female Type (Make: Kothari)", cat: "Electrical", qty: "500 Nos", type: "delivered" },
+                { desc: "Lug Terminal Set (91/24 & 225/24) Make: Venus", cat: "Electrical", qty: "1 Set", type: "delivered" },
+                { desc: "Stay Rod Bolt with Washer 3/4\" x 1-1/2\" (Make: Unbrako)", cat: "Fasteners", qty: "500 Nos", type: "delivered" },
+                { desc: "MAKITA Corded Small Angle Grinders (220-240V)", cat: "Tools", qty: "10 Nos", type: "delivered" },
+                { desc: "High Pressure Flexible Pneumatic Hose (1750 PSI)", cat: "Rubber", qty: "310 Mtr", type: "delivered" },
+                { desc: "Cork Sheet Gasket (5mm & 3mm thick)", cat: "Gaskets", qty: "Various", type: "delivered" },
+                { desc: "Modified Oil Seal (Water Pump) DLW Pt. 10175880", cat: "Spares", qty: "1 Set", type: "delivered" },
+                { desc: "Impeller Water Pump S6 & WDM2", cat: "Spares", qty: "1 Set", type: "delivered" },
+                { desc: "High Tensile Hex Head Bolt M14 / 3/8\" / 5/16\" (Unbrako)", cat: "Fasteners", qty: "1 Set", type: "delivered" },
+                { desc: "Eco Solvent Printed Vinyl Display Board on 3mm Sun Board", cat: "General", qty: "690 SqFt", type: "delivered" },
+                { desc: "Neoprene Rubber Gasket for Pneumatic Joints (Drg M5/247/ER)", cat: "Rubber", qty: "200 Sets", type: "delivered" },
+                
+                // Legacy Data from PDF
+
+                { "desc": "Stand For VCB AS per Drg No. Sr DEE/RS/ED VED/ELECT-36 ( Attached) Each Stand should belprovide with Nos of Metalic Wheel with Swivel arrangement at one side Accepted wake OWN.", "cat": "Fabrication", "qty": "5 Nos", "type": "legacy" },
+    { "desc": "Hollow Screw Spindle As Per Sketch NO. MTS/09/SKB/95 Dated 16/11/23 Material As per IS: 1875 (1992) Class- IV Steed Accepted Make OWN.", "cat": "Mechanical", "qty": "2 NOS", "type": "legacy" },
+    { "desc": "Spindle Bar As Per Sketch No. MTS/08/SKB/96 Dated 16/11/23 Material As per IS: 1875 (1992) Clans IV Steel Accepted Make OWN", "cat": "Mechanical", "qty": "2 NOS", "type": "legacy" },
+    { "desc": "Guide Nut For Hollow Screw Spindle As per Sketch No.MTS/ 08/SKB/89 Dated 16/11/23 Material Phosphorices Bronze Accepted Make ONN.", "cat": "Mechanical", "qty": "2 NOS", "type": "legacy" },
+    { "desc": "PVC Wire Braided Discharge Hose For Fire Extinguisher Upto 6kg Fitted with Bath Size. Side end Cormection sin inner dia 12.5 MM Accepted. Firms offer Indigious.", "cat": "Safety", "qty": "700 Nos", "type": "legacy" },
+    { "desc": "Set of consist of Jaw Type Coupling and Spider size overall length 50 MM. Hub diameter 40mm Pilot Bore 18 MM over all diameter 55 MM. Short Screw 5mm. Hub Witth 30 mm. Key way Key Way Size 3/169 P/N 44811. Accepted maker OWN", "cat": "Mechanical", "qty": "25 Nos", "type": "legacy" },
+    { "desc": "ANABOND Silicon Grease Grade 662 Accepted Firm's offer Make ANABOND", "cat": "General", "qty": "3 kg", "type": "legacy" },
+    { "desc": "MS Angle Size-30x30X6MM Accepted Firwis offer Make Indigenous.", "cat": "Fabrication", "qty": "2600 Kg", "type": "legacy" },
+    { "desc": "Installation of 600 mtr Tri-colour LED light. Linfront of Main building and Maien gate 10 nos spot light (10.00 at With all the requiredeces for illumination of as tar ling-of St, DME (D)JMP Shell Jamalpur", "cat": "Electrical", "qty": "1 Set", "type": "legacy" },
+    { "desc": "Set Consist of Femaletype Terminal Lug (1) Size 2.5 MM Part No. 183489.Qty: 1 No. (il) Size 15 MM Qty 1 No. As per Samote. Accepted Make Indigenous", "cat": "Electrical", "qty": "500 Set", "type": "legacy" },
+    { "desc": "Fabric designed Beard Banner bigad 3/4 Fitted Musa e re inch with Proper installation Matter and broand size to be given by SSE Wheet Shop JMP Accepted Mare. OWN.", "cat": "General", "qty": "3050 SQFT", "type": "legacy" },
+    { "desc": "Set of Spring Lock Washer and Plain washer one set consisting of Following (1) Spring lock wather Mat- Spring Steel (EM-42) Hot Deep galvanised Size ID 0.382 00-683 Thickness: 0.141\" 3000 NOS: (11) Spring lock washer Mat- spring, Steel (En4241 of deep galvanished Size ID 0.636. OD 1.079 thicknes 0.203\"-3000 Nos.(111) Plain Washer ID 0406\" OD 0.875\" Thickmer-0.050 Zine plating 2000 Nos. Accepted Firmi's offer Make-Unbraka.", "cat": "Fasteners", "qty": "2 Set", "type": "legacy" },
+    { "desc": "Loctite 55 in 160 MTRŞ Packet Make Loctite or similar Accepted Make Loctite.", "cat": "General", "qty": "35 NOS", "type": "legacy" },
+    { "desc": "Eye Protective power less white is For Are Wedding work. Glass Size 41/4 inch 3 ymch 8 Make Weldstar OR Similar", "cat": "Safety", "qty": "2000 Nos", "type": "legacy" },
+    { "desc": "Set of Magnetic Powder (i) Fluorescent Magnetic Powder for wet Process oil base ferroflux.(GyF 101) , Qty. - 1 Kg (ii) Black Magnetic Powder for wet process (Oil base), Qty. - 1 Kg Accepted Firm's Offer Make: NDTA PVT.", "cat": "Tools", "qty": "5 Set", "type": "legacy" },
+    { "desc": "Hex Head Bolt with prevailing Torque Locknut size 9/16 UNF MFPL or simitar 3/2 Long and 3%", "cat": "Fasteners", "qty": "100 Nos", "type": "legacy" },
+    { "desc": "APD For knuckle pin As per SK No. JMP/SK/Wagon/06/2021 Accepted Make OWN", "cat": "Mechanical", "qty": "15000 NOS", "type": "legacy" },
+    { "desc": "Spare parts For Pneumatic pipe line Fitting works (1) Hex Nipp Je SAE Type TPI-14 Qty 50 Nos (2) Hose End Fittingstraight (ST) Type TPI-14 Qty 506NOS ELGON Hose End Fitting Tube TPI-081 Hing Type TPI-08 sty SONOD. One Se Se consisting of SLNO. 1403 Accepted Make-OWN", "cat": "Mechanical", "qty": "4 Set", "type": "legacy" },
+    { "desc": "Set of Carbon Bush With Carbon Brush -02 Nos Spring 02 Nos and Replaceable Brushholder Size 22MM Jongx6 MM OD D2NOS Make National or Simitor Accepted Firm's offer make National.", "cat": "Electrical", "qty": "100 Set", "type": "legacy" },
+    { "desc": "Set of items. One set consisting of following: - (i) Oil seal to DLW Drg. No. TPE-10-0002 ALT-F or latest. PL No. 10170789.-01 No. (ii ) Modified oil seal (water pump) DLW Pt. No. 10175880, Drg. No. SKE-1317 Alt. Nil PL No. 10170807.-01 No. (iii) Impeller water pump S6. PL No. 10122941. - 01 No. (iv) Impeller water pump WDM2, ER Drg. No. CCC/DL- 792 PL No. 10122953.01 No. Accepted Make:- OWN.", "cat": "Mechanical", "qty": "2 Set", "type": "legacy" },
+    { "desc": "High Pressure Flexible Preu Matic heat resistant Synthetic rubber Free Hose pipe size ID 0.500 inchxOD 0.922 inch Maximum Working pressure 1700 PSI. Accepted Firmi's offer Make- Indigenous.", "cat": "Rubber", "qty": "600 Mtr", "type": "legacy" },
+    { "desc": "Cabin Furnishing Item (10 items) As Per Annexure-XXIII. Accepted Make Indigious", "cat": "General", "qty": "4 Set", "type": "legacy" },
+    { "desc": "Metal Coolent Hose pipe diameter 1 inch x Length 12 inch With Ball valve Accepted Make OWN", "cat": "Mechanical", "qty": "10 Nos", "type": "legacy" },
+    { "desc": "Oil Seal Piston Seal Size Out Side diameter 180mm inside diameter 160 mm Thickness 12mm. Polyhydrome Fenner orgin desine should be as per Piston Housing or press Machine Accepted make. Multi Seal", "cat": "Rubber", "qty": "10 Nos", "type": "legacy" },
+    { "desc": "Four Port Three Position Hyd Directional Control valve Valve No.4 WE 10G33/CW230-N91 Operating Voltage 230V/AC Make-Rexroth or similar. Accepted Make-REXROTH", "cat": "Mechanical", "qty": "2 Nos", "type": "legacy" },
+    { "desc": "Knife switch cover AS PER DRG NO, JMP/SK-73/11 ALT-01", "cat": "Electrical", "qty": "60 Nos", "type": "legacy" },
+    { "desc": "M-20 X 105 MM CSK Head Screw with nut RDSO. Drg. No:- 09034-S-08, Alt- 03 or latest. item No-13.", "cat": "Fasteners", "qty": "384 Nos", "type": "legacy" },
+    { "desc": "BRADMA HAND PUNCH SET 0 TO 8, MODEL:- 9HHP060, SIZE: 6mm, MAKE- BRADMA Similar Accepted Make:- bradma", "cat": "Tools", "qty": "2 Set", "type": "legacy" },
+    { "desc": "Hold down cylinder for searing Machine full set", "cat": "Mechanical", "qty": "8 Set", "type": "legacy" },
+    { "desc": "Bevel pinion set as per sketch nо- JMP/SK/MTS/02/2021 dt. 07/10/21 for plant no 10210A/TC Milling Machine, Material EN-353. Accepted Make: Own", "cat": "Mechanical", "qty": "2 Set", "type": "legacy" },
+    { "desc": "Set of Stainless steel Alphabetical designer Letters of I (Hart) JAMALPUR alongwith Red heart with illuminating facility, height 15 inch. Qty-3Nos. Aquarium Size-5Feet x 3Feet. Qty -01No. Accepted Make: DEW", "cat": "Fabrication", "qty": "1 Set", "type": "legacy" },
+    { "desc": "Motor pump coupling suction strainer, return line filter, Breather filter, oil level indicator Benjo fitting, Hydraulic hose pipe, fitting one side straight fitting, Elbow & End fitting metal clamp. Accepted Make:-riddhi", "cat": "Mechanical", "qty": "1 Set", "type": "legacy" },
+    { "desc": "Welding Slag & Spatter Cleaner Brush type made of Hardcore stainless steel wire of 6 rows fitted on anti turmeric wooden handle suitable for MIG/MAG welding. Accepted Make Standco", "cat": "Tools", "qty": "200 Nos", "type": "legacy" },
+    { "desc": "Misc. Cabin Furnishing Items (10 Items) As per Annexure -A. Accepted Make: Own", "cat": "General", "qty": "1 Set", "type": "legacy" },
+    { "desc": "Lapping Graphite coated, size-width 13mm X Thickness 09 mm As per sample Accepted Make: charminaar", "cat": "General", "qty": "50 Kgs", "type": "legacy" },
+    { "desc": "High-Tensile Hex Head Bolt with Nut and Washer Size-20 x 80 mm", "cat": "Fasteners", "qty": "24 Set", "type": "legacy" },
+    { "desc": "Set of Hex Head Bolt & Cotter Pin. One set consisting the following items: (1) Hex Head Bolt size 12mm x 25mm. Material High Tensile, Qty. 01 No. (2) Hex Head Bolt with nylock nut with two spring washer and two plain washer, size - 3/8\" x 1.1/2\", Material: High Tensile, Qty. 01 No. (3) Cotter Pin 3/16\" x 3.1/2\". Make Unbrako. TVS, MFPL, Qty. - 01 No. Accepted Firm's offer Make-Unbrako.", "cat": "Fasteners", "qty": "500 Set", "type": "legacy" },
+    { "desc": "SS Flat Washer Material grade Hardness 50 HRC (a) Size 00-22 MMXID-12 MMX Thickness 1.6 MM 50 NOS (6) Size OD-18 MM,XID-14MM X Thicknes 1.6 MM 500 NOS Accepted Firmis offer Make TVS.", "cat": "Fasteners", "qty": "1 Set", "type": "legacy" },
+    { "desc": "Flange Nylon Insert LockNut As per Sample Accelated Make OWN", "cat": "Fasteners", "qty": "100 Nos", "type": "legacy" },
+    { "desc": "Hose Assly SAE 100 R5R of 1/2 long with 1/2 ID x 20-1/2 long with 1/2 NPT male and fitting duly crimped at both ends to DLW Pt. No. 17320483, EMD Pt. No. 40081684. Accepted Firm's offer Make- OWN.", "cat": "Mechanical", "qty": "150 Number", "type": "legacy" },
+    { "desc": "Exhaust Gas temperature Thermometer with thermocouple prob. Specification (a) Sensor Type(b) Display size 51mm x32mm Super large LCD Display (c) Digit size 15 mm(d) Operating Temperature 0 to 1000 Deg. C (32 to 122 Deg. F) Model:- TM-9162. Accepted Firm's Offer Make: Lutron.", "cat": "Tools", "qty": "2 Number", "type": "legacy" },
+    { "desc": "Set of Heavy duty double rib bench vice swivel base with sturdy and accurately vice made from graded Cl casting, square thread screw, mild steel floating nut (Replaceable), carbon steel jaw duly heat treated swivel base can be converting to fix base by removing the base. Accepted Firm's Offer Make: Indigenous.", "cat": "Tools", "qty": "1 Set", "type": "legacy" },
+    { "desc": "Cap assembly set for fire extinguisher for Co2 type including safety chain and safety clip size 3 1/16. Material- Brass forged Cap with chrome plating. Accepted Firm's Offer Make: Indigenous.", "cat": "Safety", "qty": "200 Number", "type": "legacy" },
+    { "desc": "Modified Nitrile Rubber Cap for Gear Case with 2 Nos MS holding adjustable Clamp Ring with 10 long Chain. Thickness of Chain Wire dia. - 4 mm as per sketch. Accepted Firm's Offer Make: Own.", "cat": "Rubber", "qty": "200 Number", "type": "legacy" },
+    { "desc": "High Tensile Square Head Drilled Bolt with Castle nut size :- M8 x 420 ong, TPI-7. Accepted Firm's Offer Make # (Unbrako)", "cat": "Fasteners", "qty": "216 Number", "type": "legacy" },
+    { "desc": "Set of Head Bolt & Nut. One set consisting of following items :- (a) High tensile hex head bolt with nut and 1 No. spring washer and 1 No. plane washer. Size- 1/4 X 1, Make-TVS-250 Nos. (b) High tensile hex head bolt with nut and 1 No. spring washer and 1 No. plane washer. Size- 5 mm X 75 mm, Make-TVS-250 Nos. Accepted Firm's offer Make:- TVS.", "cat": "Fasteners", "qty": "4 Set", "type": "legacy" },
+    { "desc": "Stand mounted 'U' Tube manometer of range 150-0-150 mm as per specification:- (i) Packing should be taflon neoprene and casing with transparent arclic, front metering tube. (ii) Barrel thick walled borosilicate glass tube scale. (iii) Scale material PVC in milky white colour with 1/2 nose nipple. Accepted Make:- OWN.", "cat": "Tools", "qty": "8 Number", "type": "legacy" },
+    { "desc": "Set of different types of cork sheet gasket. One set consisting of following items. (i) Transparent fibre glass, size - 838mm x 25mm x 5mm, Qty. - 100 Nos. (ii) Cork sheet base gasket for glow rod (thickness - 1/8), Qty. - 1000 Nos. (iii) Cork sheet gasket for 33 fuel glow rod thickness - 1/8 (iv) Cork sheet gasket for 12 fuel glow rod (v) Cork sheet gasket for 6 glow rod. Accepted Make:- OWN.", "cat": "Rubber", "qty": "1 Set", "type": "legacy" },
+    { "desc": "Grinding wheel, Size - 150 mm x 25 mm x 16 mm hole As per EN - 12413 ANSI B7.1 Accepted Make:- Carborendom", "cat": "Tools", "qty": "150 Number", "type": "legacy" },
+    { "desc": "HSS Hand Tap for internal thread cutting, A hand Tap consists of three Tap-Taper TaD Cer inishng lap. having square shaft to be clamped securely with holding tool. Accepted Firm s offer Maxe- IT.", "cat": "Tools", "qty": "4 Set", "type": "legacy" },
+    { "desc": "Heat Shrinkable sleeve (Material Polyodeim) Tensile strength 15kg/MM Sir Temperature 80-125c Accepted Make Indigo", "cat": "Electrical", "qty": "50 Meter", "type": "legacy" },
+    { "desc": "Mild Steel bright zinc plated finish flat cotter pin. Size:- Long :-125 mm, Width:- 23 mm, Thickness :- 8mm. Accepted Firm's Offer Make: self.", "cat": "Fasteners", "qty": "1000 Number", "type": "legacy" },
+            ];
+
+        const container = document.getElementById('databaseRows');
+        const countSpan = document.getElementById('totalRecords');
+
+        function renderDatabase(data) {
+            container.innerHTML = '';
+            data.forEach(item => {
+                const statusClass = item.type === 'delivered' ? 'delivered' : 'legacy';
+                const statusText = item.type === 'delivered' ? 'Delivered' : 'Legacy Record';
+                
+                const html = `
+                    <div class="data-row">
+                        <div class="col-desc">
+                            ${item.desc}
+                        </div>
+                        <div class="col-cat">${item.cat}</div>
+                        <div class="col-qty">${item.qty}</div>
+                        <div class="col-stat">
+                            <span class="badge ${statusClass}">${statusText}</span>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+            countSpan.innerText = `${data.length} Records Loaded`;
+        }
+
+        function filterDatabase() {
+            const term = document.getElementById('dbSearch').value.toLowerCase();
+            const filtered = database.filter(item => 
+                item.desc.toLowerCase().includes(term) || 
+                item.cat.toLowerCase().includes(term)
+            );
+            renderDatabase(filtered);
+        }
+
+        // Initialize
+        renderDatabase(database);
     </script>
 </body>
 </html>
