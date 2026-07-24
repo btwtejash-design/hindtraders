@@ -9,7 +9,10 @@ import ChallanPreview from './components/previews/ChallanPreview';
 import GcPreview from './components/previews/GcPreview';
 import { FileText, Truck, ShieldCheck, Download, Printer, CheckCircle, FileCode } from 'lucide-react';
 
-const API_BASE = 'http://127.0.0.1:8000/api';
+const API_BASE = import.meta.env.VITE_API_BASE 
+  || (window.location.port === '5173' || window.location.port === '3000' 
+        ? 'http://127.0.0.1:8000/api' 
+        : '/api');
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
