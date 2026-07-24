@@ -13,6 +13,8 @@ except ImportError:
 
 def html_to_pdf(html_content: str, output_path: str) -> str:
     """Converts HTML string to a PDF file on disk"""
+    # Replace Rupee symbols and entities to prevent missing glyph black boxes in xhtml2pdf
+    html_content = html_content.replace('&#8377;', 'Rs. ').replace('₹', 'Rs. ').replace('&rupee;', 'Rs. ')
     dirname = os.path.dirname(output_path)
     if dirname:
         os.makedirs(dirname, exist_ok=True)
@@ -36,16 +38,36 @@ def generate_tax_invoice_pdf(data: Dict[str, Any], output_path: str) -> str:
     items_rows_html = ""
     for item in items:
         tot = round(float(item.get("quantity", 0)) * float(item.get("rate", 0)), 2)
+        qty_str = item.get("quantity_display", f"{item.get('quantity', 1)} {item.get('unit', 'Nos')}")
         items_rows_html += f"""
         <tr style="height: 60px;">
             <td style="border: 1px solid #000; text-align: center; padding: 4px;">{item.get('sr_no', 1)}</td>
             <td style="border: 1px solid #000; padding: 4px;">{item.get('description', '')}</td>
             <td style="border: 1px solid #000; text-align: center; padding: 4px;">{item.get('hsn', '7318')}</td>
-            <td style="border: 1px solid #000; text-align: center; padding: 4px;">{item.get('quantity', 1)}</td>
-            <td style="border: 1px solid #000; text-align: right; padding: 4px;">{item.get('rate', 0):.2f}</td>
-            <td style="border: 1px solid #000; text-align: right; padding: 4px;">{tot:.2f}</td>
+            <td style="border: 1px solid #000; text-align: center; padding: 4px;">{qty_str}</td>
+            <td style="border: 1px solid #000; text-align: right; padding: 4px;">Rs. {item.get('rate', 0):.2f}</td>
+            <td style="border: 1px solid #000; text-align: right; padding: 4px;">Rs. {tot:.2f}</td>
         </tr>
         """
+
+    candidate_paths = [
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "sample", "picture.png")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sample", "picture.png")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "client", "src", "assets", "picture.png")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "client", "public", "picture.png")),
+    ]
+    picture_path = None
+    for p in candidate_paths:
+        if os.path.exists(p):
+            picture_path = p
+            break
+
+    if picture_path and os.path.exists(picture_path):
+        with open(picture_path, "rb") as img_file:
+            b64_img = base64.b64encode(img_file.read()).decode('utf-8')
+        header_html = f'<div style="text-align: center; margin-top: 6px; margin-bottom: 4px;"><img src="data:image/png;base64,{b64_img}" style="height: 52px;" /></div>'
+    else:
+        header_html = f'<div class="main-title">{data["vendor"]["name"].upper()}</div>'
 
     html = f"""
     <!DOCTYPE html>
@@ -59,89 +81,90 @@ def generate_tax_invoice_pdf(data: Dict[str, Any], output_path: str) -> str:
                 @frame footer_frame {{
                     -pdf-frame-content: footerContent;
                     bottom: 10mm;
-                    margin-left: 15mm;
-                    margin-right: 15mm;
                     height: 25mm;
                 }}
             }}
             body {{
                 font-family: Helvetica, Arial, sans-serif;
-                font-size: 9pt;
-                line-height: 1.25;
+                font-size: 9.5pt;
+                line-height: 1.3;
                 color: #000;
             }}
-            .title {{
-                font-size: 16pt;
+            .header-meta {{
                 font-weight: bold;
-                text-align: right;
-                margin-bottom: 8px;
+                font-size: 9pt;
+            }}
+            .main-title {{
+                font-size: 18pt;
+                font-weight: bold;
+                text-align: center;
+                margin-top: 10px;
+                margin-bottom: 2px;
+            }}
+            .sub-title {{
+                font-size: 10pt;
+                font-weight: bold;
+                text-align: center;
+                margin-bottom: 4px;
+            }}
+            .badge-box {{
+                text-align: center;
+                border: 1px solid #000;
+                border-radius: 4px;
+                padding: 2px 6px;
+                font-size: 8pt;
+                margin: 0 auto 6px auto;
+                width: 90%;
+            }}
+            .address {{
+                text-align: center;
+                font-weight: bold;
+                font-size: 9.5pt;
+                margin-bottom: 10px;
             }}
             table {{
                 width: 100%;
                 border-collapse: collapse;
             }}
-            .details-table {{
-                width: 45%;
-                float: right;
-                margin-bottom: 10px;
+            th {{
                 border: 1px solid #000;
-            }}
-            .details-table td, .details-table th {{
-                border: 1px solid #000;
-                padding: 3px 5px;
-            }}
-            .box-table {{
-                width: 100%;
-                margin-bottom: 10px;
-            }}
-            .box-table td {{
-                width: 50%;
-                border: 1px solid #000;
-                vertical-align: top;
-                padding: 6px;
-            }}
-            .header-bg {{
-                background-color: #d9d9d9;
-                font-weight: bold;
-            }}
-            .items-table th {{
-                border: 1px solid #000;
-                background-color: #d9d9d9;
+                background-color: #f0f0f0;
                 padding: 4px;
+                font-size: 9pt;
+            }}
+            td {{
+                font-size: 9pt;
             }}
         </style>
     </head>
     <body>
-        <div class="title">TAX INVOICE</div>
-
-        <div style="text-align: right; margin-bottom: 10px;">
-            <table class="details-table" align="right">
-                <tr class="header-bg"><td colspan="2">DETAILS</td></tr>
-                <tr><td style="font-weight: bold;">INVOICE NO:</td><td>{data.get('invoice_no', '42')}</td></tr>
-                <tr><td style="font-weight: bold;">DATE:</td><td>{data.get('invoice_date', '15-06-2026')}</td></tr>
-                <tr><td style="font-weight: bold;">PO.NO:</td><td>{data.get('po_number', '')}</td></tr>
-                <tr><td style="font-weight: bold;">DATE:</td><td>{data.get('po_date', '')}</td></tr>
-                <tr><td style="font-weight: bold;">DELIVERY CHAALAN NO:</td><td>{data.get('challan_no', '44')}</td></tr>
-                <tr><td style="font-weight: bold;">DATE:</td><td>{data.get('challan_date', '24-07-2026')}</td></tr>
-                <tr><td style="font-weight: bold;">CRN.No- {data.get('crn_no', '')}</td><td style="font-weight: bold;">DATE: {data.get('crn_date', '')}</td></tr>
-            </table>
-        </div>
-
-        <div style="clear: both; height: 5px;"></div>
-
-        <table class="box-table">
+        <table style="width: 100%; margin-bottom: 6px;">
             <tr>
-                <td>
-                    <div class="header-bg" style="padding: 2px 4px; margin-bottom: 4px;">FROM</div>
-                    <b>COMPANY:</b> {data['vendor']['name']}<br/>
-                    <b>ADDRESS:</b> {data['vendor']['address']}<br/>
-                    <b>PHONE:</b> {data['vendor']['phone']}<br/>
-                    <b>E-MAIL:</b> {data['vendor']['email']}<br/>
-                    <b>GSTIN:</b> {data['vendor']['gstin']}
+                <td style="font-weight: bold;">GSTIN:- {data['vendor']['gstin']}</td>
+                <td style="text-align: center; font-weight: bold; text-decoration: underline; font-size: 12pt;">TAX INVOICE</td>
+                <td style="text-align: right; font-weight: bold;">Mob:- {data['vendor']['phone']}</td>
+            </tr>
+        </table>
+
+        {header_html}
+        <div class="sub-title">RAILWAY CONTRACTOR & SUPPLIER</div>
+        <div class="badge-box">Manufactures:- Diesel Locomotives Spare Parts, Ferrous & Non Ferrous Components and General Order Suppliers</div>
+        <div class="address">{data['vendor']['address'].upper()}</div>
+
+        <table style="border: 1px solid #000; margin-bottom: 10px;">
+            <tr>
+                <td style="width: 50%; border-right: 1px solid #000; vertical-align: top; padding: 4px;">
+                    <b>INVOICE NO:</b> {data.get('invoice_no', '42')}<br/>
+                    <b>DATE:</b> {data.get('invoice_date', '15-06-2026')}<br/>
+                    <b>PURCHASE ORDER NO:</b> {data.get('po_number', '')}<br/>
+                    <b>DATE:</b> {data.get('po_date', '')}<br/>
+                    <b>DELIVERY CHAALAN NO:</b> {data.get('challan_no', '42')}<br/>
+                    <b>DATE:</b> {data.get('challan_date', '15-06-2026')}<br/>
+                    <b>CRN.No- {data.get('crn_no', '')}</b> &nbsp;&nbsp; <b>DATE: {data.get('crn_date', '')}</b>
                 </td>
-                <td>
-                    <div class="header-bg" style="padding: 2px 4px; margin-bottom: 4px;">BILL TO</div>
-                    <b>TO:</b> {data['bill_to']['name']}<br/>
+                <td style="width: 50%; vertical-align: top; padding: 4px;">
+                    <b>BILL TO:</b><br/>
+                    <b>NAME:</b> {data['bill_to']['name']}<br/>
                     <b>DEPARTMENT:</b> {data['bill_to']['department']}<br/>
                     <b>LOCATION:</b> {data['bill_to']['location']}<br/>
                     <b>CONSIGNEE:</b> {data['bill_to']['consignee']}<br/>
@@ -154,11 +177,11 @@ def generate_tax_invoice_pdf(data: Dict[str, Any], output_path: str) -> str:
             <thead>
                 <tr>
                     <th style="width: 6%;">Sr. No.</th>
-                    <th style="width: 50%;">Description</th>
+                    <th style="width: 48%;">Description</th>
                     <th style="width: 10%;">HSN</th>
-                    <th style="width: 10%;">Quantity (Nos)</th>
-                    <th style="width: 12%;">Rate/ Unit (&#8377;)</th>
-                    <th style="width: 12%;">Total (&#8377;)</th>
+                    <th style="width: 12%;">Quantity</th>
+                    <th style="width: 12%;">Rate/ Unit (Rs.)</th>
+                    <th style="width: 12%;">Total (Rs.)</th>
                 </tr>
             </thead>
             <tbody>
@@ -172,19 +195,19 @@ def generate_tax_invoice_pdf(data: Dict[str, Any], output_path: str) -> str:
                     <b>Grand Total in Words:</b> {words_total}
                 </td>
                 <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">Taxable Amount:</td>
-                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">&#8377; {taxable_sum:.2f}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">Rs. {taxable_sum:.2f}</td>
             </tr>
             <tr>
                 <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">SGST: {int(sgst_rate)}%</td>
-                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">&#8377; {sgst_amount:.2f}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">Rs. {sgst_amount:.2f}</td>
             </tr>
             <tr>
                 <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">CGST: {int(cgst_rate)}%</td>
-                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">&#8377; {cgst_amount:.2f}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">Rs. {cgst_amount:.2f}</td>
             </tr>
             <tr>
                 <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">Grand Total:</td>
-                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">&#8377; {grand_total:.2f}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">Rs. {grand_total:.2f}</td>
             </tr>
         </table>
 
