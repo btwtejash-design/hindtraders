@@ -6,9 +6,11 @@ services:
     region: singapore
     plan: free
     buildCommand: rm -f "doc generation/client/package-lock.json" && npm --prefix "doc generation/client" install && npm --prefix "doc generation/client" run build && pip install -r "doc generation/server/requirements.txt"
-    startCommand: uvicorn server.main:app --host 0.0.0.0 --port $PORT
+    startCommand: PYTHONPATH="doc generation/server:doc generation" uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: NODE_VERSION
         value: 20.18.0
+      - key: PYTHONPATH
+        value: "doc generation/server:doc generation"
