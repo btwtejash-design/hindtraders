@@ -2,6 +2,9 @@ import os
 import shutil
 import zipfile
 import tempfile
+import requests
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from fastapi import FastAPI, File, UploadFile, HTTPException, Body, Path
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -173,6 +176,93 @@ async def parse_po_endpoint(file: UploadFile = File(...)):
         return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to parse PO PDF: {str(e)}")
+
+@app.post("/api/fetch-po-by-number")
+def fetch_po_by_number(payload: Dict[str, Any] = Body(...)):
+    """
+    Downloads PO PDF directly from official IREPS URL pattern:
+    https://www.ireps.gov.in/ireps/etender/pdfdocs/MMIS/PO/<year>/02/<po-number>.pdf
+    and parses purchase order details into structured database record.
+    """
+    po_number = str(payload.get("po_number", "")).strip()
+    if not po_number:
+        raise HTTPException(status_code=400, detail="PO Number is required")
+
+    custom_year = str(payload.get("year", "")).strip()
+
+    candidate_years = []
+    if custom_year and custom_year.isdigit() and len(custom_year) == 4:
+        candidate_years.append(custom_year)
+
+    # Auto-detect year from PO number digits 3-4 if valid (e.g. 5526... -> 2026)
+    if len(po_number) >= 4 and po_number[2:4].isdigit():
+        yy = int(po_number[2:4])
+        if 20 <= yy <= 30:
+            detected_yr = f"20{yy:02d}"
+            if detected_yr not in candidate_years:
+                candidate_years.append(detected_yr)
+
+    # Standard fallback years
+    for y in ["2026", "2025", "2024", "2023", "2022"]:
+        if y not in candidate_years:
+            candidate_years.append(y)
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/pdf,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    }
+
+    downloaded_pdf_path = None
+    fetched_url = ""
+    last_error = ""
+
+    for yr in candidate_years:
+        target_url = f"https://www.ireps.gov.in/ireps/etender/pdfdocs/MMIS/PO/{yr}/02/{po_number}.pdf"
+        try:
+            res = requests.get(target_url, headers=headers, timeout=12, verify=False)
+            if res.status_code == 200 and len(res.content) > 1000 and res.content.startswith(b'%PDF'):
+                temp_file = os.path.join(TEMP_DIR, f"{po_number}.pdf")
+                with open(temp_file, "wb") as f:
+                    f.write(res.content)
+                downloaded_pdf_path = temp_file
+                fetched_url = target_url
+                break
+            else:
+                last_error = f"HTTP {res.status_code} at {target_url}"
+        except Exception as err:
+            last_error = f"Error: {str(err)}"
+
+    if not downloaded_pdf_path or not os.path.exists(downloaded_pdf_path):
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Could not download PO PDF from IREPS for PO #{po_number}. Attempted URL pattern: https://www.ireps.gov.in/ireps/etender/pdfdocs/MMIS/PO/<year>/02/{po_number}.pdf. Detail: {last_error}"
+        )
+
+    try:
+        data = parse_po_pdf(downloaded_pdf_path)
+        data["id"] = f"REC-{data['po_number']}"
+        data["fetched_url"] = fetched_url
+        save_record(data)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Downloaded PO from IREPS ({fetched_url}), but failed to parse PDF: {str(e)}")
+
+@app.get("/api/download-ireps-po")
+def download_ireps_po_direct(po_number: str, year: str = "2026"):
+    """Proxy endpoint to download original IREPS PO PDF file"""
+    target_url = f"https://www.ireps.gov.in/ireps/etender/pdfdocs/MMIS/PO/{year}/02/{po_number}.pdf"
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    try:
+        res = requests.get(target_url, headers=headers, timeout=15, verify=False)
+        if res.status_code == 200 and res.content.startswith(b'%PDF'):
+            temp_file = os.path.join(TEMP_DIR, f"IREPS_PO_{po_number}.pdf")
+            with open(temp_file, "wb") as f:
+                f.write(res.content)
+            return FileResponse(temp_file, filename=f"IREPS_PO_{po_number}.pdf", media_type="application/pdf")
+        else:
+            raise HTTPException(status_code=404, detail=f"PO PDF not found on IREPS at {target_url}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to download PO from IREPS: {str(e)}")
 
 # --- PDF GENERATION ENDPOINTS ---
 

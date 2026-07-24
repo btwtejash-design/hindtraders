@@ -173,6 +173,39 @@ export default function App() {
     }
   };
 
+  const handleFetchPoByNumber = async (poNumber, year) => {
+    setIsLoading(true);
+    setStatusMsg(`Downloading PO #${poNumber} directly from IREPS (${year})...`);
+    try {
+      const res = await fetch(`${API_BASE}/fetch-po-by-number`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ po_number: poNumber, year: year })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (!data.invoice_no) data.invoice_no = '42';
+        if (!data.invoice_date) data.invoice_date = new Date().toLocaleDateString('en-GB');
+        if (!data.challan_no) data.challan_no = data.invoice_no;
+        if (!data.challan_date) data.challan_date = new Date().toLocaleDateString('en-GB');
+        if (!data.gc_file_no) data.gc_file_no = 'HT/GC-WC/26-27';
+        if (!data.gc_date) data.gc_date = new Date().toLocaleDateString('en-GB');
+        if (!data.crn_no) data.crn_no = '';
+        if (!data.crn_date) data.crn_date = '';
+
+        setPoData(data);
+        setStatusMsg(`Successfully extracted PO #${poNumber} directly from IREPS!`);
+      } else {
+        const errJson = await res.json();
+        alert(`IREPS Fetch Error: ${errJson.detail}`);
+      }
+    } catch (err) {
+      alert(`Network error fetching PO from IREPS: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const downloadBackendFile = async (endpoint, defaultFilename) => {
     if (!poData) return;
     try {
@@ -242,8 +275,10 @@ export default function App() {
         <div className="no-print">
           <PoUploader
             onFileUpload={handleFileUpload}
+            onFetchPoByNumber={handleFetchPoByNumber}
             isLoading={isLoading}
             currentPoNo={poData?.po_number}
+            apiBase={API_BASE}
           />
 
           {poData && (
