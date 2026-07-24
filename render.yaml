@@ -1,21 +1,14 @@
 services:
-  # 1. Python FastAPI Backend Service
+  # Single Unified Web Service (FastAPI Backend + React Frontend bundled)
   - type: web
-    name: hindtraders-backend
+    name: hindtraders-app
     env: python
     region: singapore
     plan: free
-    rootDir: doc generation/server
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    buildCommand: npm --prefix "doc generation/client" install && npm --prefix "doc generation/client" run build && pip install -r "doc generation/server/requirements.txt"
+    startCommand: uvicorn server.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-
-  # 2. React Frontend Portal (Static Site)
-  - type: web
-    name: hindtraders-portal
-    env: static
-    rootDir: doc generation/client
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
+      - key: NODE_VERSION
+        value: 20.0.0
