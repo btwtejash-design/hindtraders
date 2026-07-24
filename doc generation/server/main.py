@@ -58,6 +58,17 @@ os.makedirs(TEMP_DIR, exist_ok=True)
 
 SAMPLE_PO_PATH = os.path.join(BASE_DIR, "sample", "55265692101304.pdf")
 
+@app.get("/api/ping")
+@app.get("/health")
+def ping_health():
+    import datetime
+    return {
+        "status": "ok",
+        "alive": True,
+        "service": "Hind Traders App",
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
+    }
+
 @app.get("/")
 def root():
     root_index = os.path.join(ROOT_DIR, "index.html")
