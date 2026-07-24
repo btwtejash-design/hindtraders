@@ -220,6 +220,25 @@ def generate_challan_pdf(data: Dict[str, Any], output_path: str) -> str:
         </tr>
         """
 
+    candidate_paths = [
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "sample", "picture.png")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sample", "picture.png")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "client", "src", "assets", "picture.png")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "client", "public", "picture.png")),
+    ]
+    picture_path = None
+    for p in candidate_paths:
+        if os.path.exists(p):
+            picture_path = p
+            break
+
+    if picture_path and os.path.exists(picture_path):
+        with open(picture_path, "rb") as img_file:
+            b64_img = base64.b64encode(img_file.read()).decode('utf-8')
+        header_html = f'<div style="text-align: center; margin-top: 6px; margin-bottom: 4px;"><img src="data:image/png;base64,{b64_img}" style="height: 52px;" /></div>'
+    else:
+        header_html = f'<div class="main-title">{data["vendor"]["name"].upper()}</div>'
+
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -298,7 +317,7 @@ def generate_challan_pdf(data: Dict[str, Any], output_path: str) -> str:
             </tr>
         </table>
 
-        <div class="main-title">{data['vendor']['name'].upper()}</div>
+        {header_html}
         <div class="sub-title">RAILWAY CONTRACTOR & SUPPLIER</div>
         <div class="badge-box">Manufactures:- Diesel Locomotives Spare Parts, Ferrous & Non Ferrous Components and General Order Suppliers</div>
         <div class="address">{data['vendor']['address'].upper()}</div>

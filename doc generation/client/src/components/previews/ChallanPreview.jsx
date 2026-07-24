@@ -1,4 +1,5 @@
 import React from 'react';
+import challanHeaderImage from '../../assets/picture.png';
 
 export default function ChallanPreview({ poData }) {
   if (!poData) return null;
@@ -15,10 +16,12 @@ export default function ChallanPreview({ poData }) {
       </div>
 
       {/* Header Title */}
-      <div style={{ textAlign: 'center', marginTop: '15px', marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '20pt', fontWeight: 'bold', margin: 0, letterSpacing: '0.02em' }}>
-          {poData.vendor.name.toUpperCase()}
-        </h2>
+      <div style={{ textAlign: 'center', marginTop: '10px', marginBottom: '15px' }}>
+        <img
+          src={challanHeaderImage || '/picture.png'}
+          alt="Hind Traders"
+          style={{ height: '55px', objectFit: 'contain', margin: '0 auto 6px auto', display: 'block' }}
+        />
         <div style={{ fontSize: '10pt', fontWeight: 'bold', margin: '2px 0' }}>
           RAILWAY CONTRACTOR & SUPPLIER
         </div>
