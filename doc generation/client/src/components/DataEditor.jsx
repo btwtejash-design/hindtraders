@@ -14,13 +14,22 @@ export default function DataEditor({ poData, onChange }) {
 
   const handleItemChange = (index, key, value) => {
     const updatedItems = [...poData.items];
-    updatedItems[index] = { ...updatedItems[index], [key]: value };
+    const item = { ...updatedItems[index], [key]: value };
+
     // Recalculate amount if rate or quantity changes
     if (key === 'rate' || key === 'quantity') {
-      const q = parseFloat(updatedItems[index].quantity) || 0;
-      const r = parseFloat(updatedItems[index].rate) || 0;
-      updatedItems[index].total_amount = roundVal(q * r);
+      const q = parseFloat(item.quantity) || 0;
+      const r = parseFloat(item.rate) || 0;
+      item.total_amount = roundVal(q * r);
     }
+
+    if (key === 'quantity' || key === 'unit') {
+      const q = item.quantity ?? 0;
+      const u = item.unit ?? 'Nos';
+      item.quantity_display = `${q} ${u}`;
+    }
+
+    updatedItems[index] = item;
     onChange({ ...poData, items: updatedItems });
   };
 
@@ -200,7 +209,7 @@ export default function DataEditor({ poData, onChange }) {
               onChange={(e) => handleItemChange(idx, 'description', e.target.value)}
             />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '0.4rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '0.4rem' }}>
               <div>
                 <span className="form-label" style={{ fontSize: '0.7rem' }}>Qty</span>
                 <input
@@ -210,6 +219,33 @@ export default function DataEditor({ poData, onChange }) {
                   value={item.quantity}
                   onChange={(e) => handleItemChange(idx, 'quantity', parseFloat(e.target.value) || 0)}
                 />
+              </div>
+
+              <div>
+                <span className="form-label" style={{ fontSize: '0.7rem' }}>Unit</span>
+                <select
+                  className="form-input"
+                  style={{ padding: '0.2rem 0.3rem', fontSize: '0.8rem', background: '#111', color: 'var(--gold)', fontWeight: 'bold' }}
+                  value={item.unit || 'Nos'}
+                  onChange={(e) => handleItemChange(idx, 'unit', e.target.value)}
+                >
+                  <option value="Nos">Nos (Numbers)</option>
+                  <option value="Set">Set</option>
+                  <option value="Sets">Sets</option>
+                  <option value="Kg">Kg (Kilograms)</option>
+                  <option value="Mtr">Mtr (Meters)</option>
+                  <option value="SqFt">SqFt (Square Feet)</option>
+                  <option value="Pair">Pair</option>
+                  <option value="Pairs">Pairs</option>
+                  <option value="Pkt">Pkt (Packets)</option>
+                  <option value="Ltr">Ltr (Litres)</option>
+                  <option value="Box">Box</option>
+                  <option value="Dozen">Dozen</option>
+                  <option value="MT">MT (Metric Ton)</option>
+                  <option value="Quintal">Quintal</option>
+                  <option value="Roll">Roll</option>
+                  <option value="Bundle">Bundle</option>
+                </select>
               </div>
 
               <div>

@@ -70,7 +70,7 @@ export default function ChallanPreview({ poData }) {
                 {item.description}
               </td>
               <td style={{ border: '1px solid #000', padding: '8px', textAlign: 'center' }}>
-                {item.quantity_display || `${item.quantity}Nos`}
+                {item.quantity_display || `${item.quantity} ${item.unit || 'Nos'}`}
               </td>
             </tr>
           ))}
