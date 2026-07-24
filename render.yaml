@@ -5,7 +5,7 @@ services:
     env: python
     region: singapore
     plan: free
-    buildCommand: npm --prefix "doc generation/client" install --include=optional && npm --prefix "doc generation/client" run build && pip install -r "doc generation/server/requirements.txt"
+    buildCommand: rm -f "doc generation/client/package-lock.json" && npm --prefix "doc generation/client" install && npm --prefix "doc generation/client" run build && pip install -r "doc generation/server/requirements.txt"
     startCommand: uvicorn server.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
