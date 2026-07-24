@@ -1,0 +1,104 @@
+[
+  {
+    "po_number": "55245428100675",
+    "po_date": "31/05/2024",
+    "consignee": "SSE/DPS/JAMALPUR",
+    "vendor": {
+      "name": "Hind Traders",
+      "address": "Chhoti Keshopur Nakki Nagar, Jamalpur, Bihar, 811214",
+      "phone": "+91 7903235877",
+      "email": "hindtraders19699@gmail.com",
+      "gstin": "10DFIPK1994B1ZS",
+      "bank_name": "Bank Of Baroda",
+      "account_no": "37230200000116",
+      "ifsc": "BARB0JAMALP",
+      "branch": "JAMALPUR"
+    },
+    "bill_to": {
+      "name": "Deputy Chief Account Officer (W)",
+      "department": "Eastern Railway Locomotive Workshop",
+      "location": "Jamalpur, Bihar",
+      "consignee": "--",
+      "state_code": "Bihar - 10"
+    },
+    "items": [
+      {
+        "sr_no": 1,
+        "pl_no": "157600010010",
+        "description": "High Tensile Square Head Drilled Bolt with Castle nut size :- M38 x 420 long, TPI - 7 Accepted Make: Own",
+        "hsn": "7318",
+        "quantity": 215,
+        "unit": "Nos",
+        "quantity_display": "215Nos",
+        "rate": 760.0,
+        "total_amount": 163400.0,
+        "gst_percent": 18.0
+      }
+    ],
+    "id": "REC-55245428100675",
+    "updated_at": "2026-07-24 10:16:12"
+  },
+  {
+    "po_number": "55265692101304",
+    "po_date": "13/07/2026",
+    "consignee": "SSE/DPS/JAMALPUR",
+    "vendor": {
+      "name": "Hind Traders",
+      "address": "Chhoti Keshopur Nakki Nagar, Jamalpur, Bihar, 811214",
+      "phone": "+91 7903235877",
+      "email": "hindtraders19699@gmail.com",
+      "gstin": "10DFIPK1994B1ZS",
+      "bank_name": "Bank Of Baroda",
+      "account_no": "37230200000116",
+      "ifsc": "BARB0JAMALP",
+      "branch": "JAMALPUR"
+    },
+    "bill_to": {
+      "name": "Deputy Chief Account Officer (W)",
+      "department": "Eastern Railway Locomotive Workshop",
+      "location": "Jamalpur, Bihar",
+      "consignee": "--",
+      "state_code": "Bihar - 10"
+    },
+    "items": [
+      {
+        "sr_no": 1,
+        "pl_no": "19390075",
+        "description": "SPRING (LENGTH -22 MM, DIA - 11 MM. OD, ID - 9 MM., NO. OF TURN - 16 NOS. Accepted Make. Indigenous.",
+        "hsn": "7318",
+        "quantity": 100,
+        "unit": "Nos",
+        "quantity_display": "100Nos",
+        "rate": 34.0,
+        "total_amount": 3400.0,
+        "gst_percent": 18.0
+      },
+      {
+        "sr_no": 2,
+        "pl_no": "31151784",
+        "description": "SPRING (LENGTH -12 MM, DIA - 7 MM. OD, ID - 5 MM., NO. THICKNESS - 1/2 MM. NO. OF TURN - 24 NOS. Accepted Make. Indigenous.",
+        "hsn": "7318",
+        "quantity": 200,
+        "unit": "Nos",
+        "quantity_display": "200Nos",
+        "rate": 24.5,
+        "total_amount": 4900.0,
+        "gst_percent": 18.0
+      },
+      {
+        "sr_no": 3,
+        "pl_no": "466155281493",
+        "description": "BUS BAR INSULATORS HEX TYPE HIGHT-66 MM., DIA - 3 MM. FOR BATTERY CHARGER Accepted Make. Indigenous.",
+        "hsn": "7318",
+        "quantity": 200,
+        "unit": "Nos",
+        "quantity_display": "200Nos",
+        "rate": 147.5,
+        "total_amount": 29500.0,
+        "gst_percent": 18.0
+      }
+    ],
+    "id": "REC-55265692101304",
+    "updated_at": "2026-07-24 10:15:33"
+  }
+]
