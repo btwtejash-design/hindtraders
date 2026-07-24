@@ -161,6 +161,7 @@
         <div class="container nav-flex">
             <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Home</a>
             <a href="index.html" class="brand-name">HIND TRADERS</a>
+            <a href="/documents" class="back-btn"><i class="fas fa-lock"></i> Documents 🔒</a>
         </div>
     </header>
 
@@ -411,5 +412,43 @@
         renderCatalogue(products);
     </script>
 
+    <!-- Firebase & Firestore Integration -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
+      import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyD8qHA0sp4pWlzN-4z65o-t6mSz3dm-0UU",
+        authDomain: "hindtraders-e386b.firebaseapp.com",
+        projectId: "hindtraders-e386b",
+        storageBucket: "hindtraders-e386b.firebasestorage.app",
+        messagingSenderId: "711337641799",
+        appId: "1:711337641799:web:36dfaf84cc9d9444a46e62",
+        measurementId: "G-99WKLS9D7W"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      let analytics = null;
+      try {
+        analytics = getAnalytics(app);
+      } catch (e) {
+        console.warn("Analytics notice:", e);
+      }
+      const db = getFirestore(app);
+
+      window.db = db;
+      window.saveCatalogEnquiryToFirestore = async function(enquiryData) {
+        try {
+          await addDoc(collection(db, "catalog_enquiries"), {
+            ...enquiryData,
+            timestamp: serverTimestamp()
+          });
+          console.log("Catalog enquiry saved to Firestore");
+        } catch(e) {
+          console.error("Firestore catalog enquiry error:", e);
+        }
+      };
+    </script>
 </body>
 </html>

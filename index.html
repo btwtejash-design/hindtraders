@@ -573,6 +573,7 @@
                     <li><a href="#about">About</a></li>
                     <li><a href="#services">Services</a></li>
                     <li><a href="catalog.html">Catalogue</a></li>
+                    <li><a href="/documents">Documents 🔒</a></li>
                     <li><a href="#compliance">Credentials</a></li>
                     <li><a href="#contact">Contact</a></li>
                 </ul>
@@ -1044,17 +1045,21 @@
         }
 
         // --- ASK QUESTION FUNCTION ---
-        function sendQuestion() {
+        async function sendQuestion() {
             const q = document.getElementById('userQuestion').value;
             if(q.trim() === "") {
                 alert("Please type a question first.");
                 return;
+            }
+            if (window.saveInquiryToFirestore) {
+                await window.saveInquiryToFirestore(q.trim());
             }
             window.open(`https://wa.me/917903235877?text=Hi Hind Traders, I have a question: ${encodeURIComponent(q)}`, '_blank');
         }
 
         // --- SMART NEWS FETCHER ---
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT85UVYZSkkbqm8wE7ZfT14KzC0UWm_bAJehZ1fxYI815fKi0fdHB3Ccy7AzZiSuqZWer9pfw8Y1AiD/pub?output=csv'; 
+
 
         function parseCSVLine(str) {
             const arr = [];
@@ -1235,6 +1240,104 @@
 
         // Initialize
         renderDatabase(database);
+    </script>
+
+    <!-- Firebase & Firestore Integration -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-analytics.js";
+      import { getFirestore, collection, getDocs, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+      // Firebase configuration provided
+      const firebaseConfig = {
+        apiKey: "AIzaSyD8qHA0sp4pWlzN-4z65o-t6mSz3dm-0UU",
+        authDomain: "hindtraders-e386b.firebaseapp.com",
+        projectId: "hindtraders-e386b",
+        storageBucket: "hindtraders-e386b.firebasestorage.app",
+        messagingSenderId: "711337641799",
+        appId: "1:711337641799:web:36dfaf84cc9d9444a46e62",
+        measurementId: "G-99WKLS9D7W"
+      };
+
+      // Initialize Firebase & Analytics & Firestore
+      const app = initializeApp(firebaseConfig);
+      let analytics = null;
+      try {
+        analytics = getAnalytics(app);
+      } catch (e) {
+        console.warn("Analytics notice:", e);
+      }
+      const db = getFirestore(app);
+
+      // Expose globally
+      window.firebaseApp = app;
+      window.db = db;
+      window.firestoreDb = db;
+      window.firestoreTools = { collection, getDocs, addDoc, onSnapshot, query, orderBy, serverTimestamp };
+
+      // Firestore Function: Save User Question/Inquiry
+      window.saveInquiryToFirestore = async function(questionText) {
+        try {
+          await addDoc(collection(db, "inquiries"), {
+            question: questionText,
+            timestamp: serverTimestamp(),
+            source: "hindtraders_website"
+          });
+          console.log("Inquiry saved to Firestore collection 'inquiries'.");
+        } catch (err) {
+          console.error("Firestore saveInquiry error:", err);
+        }
+      };
+
+      // Firestore Listener: Real-time News / Ticker Feed from 'news' collection
+      try {
+        const newsRef = collection(db, "news");
+        onSnapshot(newsRef, (snapshot) => {
+          if (!snapshot.empty) {
+            const tickerContainer = document.getElementById('ticker-feed');
+            const newsGrid = document.getElementById('news-grid');
+            let tickerHTML = '';
+            let newsCardHTML = '';
+            snapshot.forEach((doc) => {
+              const data = doc.data();
+              const date = data.date || new Date().toLocaleDateString('en-IN');
+              const title = data.title || '';
+              const detail = data.detail || '';
+              if (title) {
+                tickerHTML += `<div class="ticker-item"><span style="color:var(--gold); margin-right:5px;">[${date}]</span> ${title}</div>`;
+                newsCardHTML += `<div class="news-card"><span class="news-date">${date}</span><h3>${title}</h3><p>${detail}</p></div>`;
+              }
+            });
+            if (tickerHTML && tickerContainer) tickerContainer.innerHTML = tickerHTML;
+            if (newsCardHTML && newsGrid) newsGrid.innerHTML = newsCardHTML;
+          }
+        }, (err) => {
+          console.log("Firestore news subscription active");
+        });
+      } catch (e) {
+        console.warn("Firestore news listener:", e);
+      }
+
+      // Firestore Listener: Live Records from 'records' collection
+      try {
+        const recordsRef = collection(db, "records");
+        onSnapshot(recordsRef, (snapshot) => {
+          if (!snapshot.empty) {
+            const fsRecords = [];
+            snapshot.forEach(doc => {
+              const d = doc.data();
+              if (d.desc) fsRecords.push(d);
+            });
+            if (fsRecords.length > 0 && typeof renderDatabase === 'function') {
+              renderDatabase([...fsRecords, ...database]);
+            }
+          }
+        }, (err) => {
+          console.log("Firestore records subscription active");
+        });
+      } catch (e) {
+        console.warn("Firestore records listener:", e);
+      }
     </script>
 </body>
 </html>
