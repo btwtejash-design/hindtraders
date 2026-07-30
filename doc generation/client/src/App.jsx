@@ -4,6 +4,7 @@ import PasswordGate from './components/PasswordGate';
 import PoUploader from './components/PoUploader';
 import DataEditor from './components/DataEditor';
 import SavedRecordsManager from './components/SavedRecordsManager';
+import IrepsSearch from './components/IrepsSearch';
 import TaxInvoicePreview from './components/previews/TaxInvoicePreview';
 import ChallanPreview from './components/previews/ChallanPreview';
 import GcPreview from './components/previews/GcPreview';
@@ -19,6 +20,7 @@ export default function App() {
   const [poData, setPoData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('tax-invoice'); // 'tax-invoice' | 'challan' | 'gc'
+  const [activeView, setActiveView] = useState('generator'); // 'generator' | 'ireps'
   const [statusMsg, setStatusMsg] = useState('');
 
   useEffect(() => {
@@ -262,6 +264,8 @@ export default function App() {
         onPrintCurrent={handlePrint}
         hasPo={!!poData}
         onLock={handleLock}
+        activeView={activeView}
+        onToggleView={setActiveView}
       />
 
       {statusMsg && (
@@ -270,9 +274,15 @@ export default function App() {
         </div>
       )}
 
-      <main className="dashboard-grid">
-        {/* LEFT COLUMN: Controls, Editor & Saved Archive */}
-        <div className="no-print">
+      {activeView === 'ireps' ? (
+        <div style={{ padding: '1.5rem', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+          <IrepsSearch apiBase={API_BASE} />
+        </div>
+      ) : (
+        <main className="dashboard-grid">
+          {/* LEFT COLUMN: Controls, Editor & Saved Archive */}
+          <div className="no-print">
+
           <PoUploader
             onFileUpload={handleFileUpload}
             onFetchPoByNumber={handleFetchPoByNumber}
@@ -393,6 +403,8 @@ export default function App() {
           )}
         </div>
       </main>
+      )}
     </div>
   );
 }
+

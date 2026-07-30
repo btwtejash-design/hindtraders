@@ -7,7 +7,7 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from fastapi import FastAPI, File, UploadFile, HTTPException, Body, Path
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from typing import Dict, Any, List
 
@@ -27,6 +27,7 @@ try:
         save_record,
         update_crn_details
     )
+    from server.ireps_scraper import search_ireps_tenders, fetch_ireps_pdf
 except ImportError:
     from po_parser import parse_po_pdf
     from generators.tax_invoice import generate_tax_invoice_excel
@@ -43,6 +44,7 @@ except ImportError:
         save_record,
         update_crn_details
     )
+    from ireps_scraper import search_ireps_tenders, fetch_ireps_pdf
 
 app = FastAPI(title="IREPS Document Generation System", version="2.0.0")
 
@@ -368,6 +370,43 @@ def generate_gc_endpoint(data: Dict[str, Any] = Body(...)):
     out_path = os.path.join(TEMP_DIR, out_filename)
     generate_gc_docx(data, out_path)
     return FileResponse(out_path, filename=out_filename, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+
+# --- IREPS TENDER SEARCH & PROXY PDF ENDPOINTS ---
+
+@app.post("/api/ireps/search")
+def ireps_search_endpoint(payload: Dict[str, Any] = Body(...)):
+    """
+    Queries IREPS advanced search endpoint with parameters and returns parsed tender listings.
+    """
+    try:
+        results = search_ireps_tenders(payload)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"IREPS Search failed: {str(e)}")
+
+@app.get("/api/ireps/download-pdf")
+@app.get("/api/download-tender-pdf")
+def ireps_download_pdf_endpoint(url: str):
+    """
+    Proxy endpoint to download tender PDFs directly from IREPS bypassing CORS restrictions.
+    """
+    if not url:
+        raise HTTPException(status_code=400, detail="Missing required 'url' parameter")
+    try:
+        pdf_bytes = fetch_ireps_pdf(url)
+        filename = os.path.basename(url.split("?")[0])
+        if not filename.lower().endswith(".pdf"):
+            filename = "tender_document.pdf"
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"inline; filename={filename}"
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Failed to fetch tender PDF from IREPS: {str(e)}")
 
 
 # --- SERVE FRONTEND STATIC FILES & SPA FALLBACK ---

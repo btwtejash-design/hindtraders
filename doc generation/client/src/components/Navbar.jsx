@@ -1,7 +1,7 @@
 import React from 'react';
-import { FileText, Sparkles, Download, Printer, Lock, Home, ShoppingBag, ShieldCheck } from 'lucide-react';
+import { FileText, Sparkles, Download, Printer, Lock, Home, ShoppingBag, Search } from 'lucide-react';
 
-export default function Navbar({ onLoadSample, onExportAll, onPrintCurrent, hasPo, onLock }) {
+export default function Navbar({ onLoadSample, onExportAll, onPrintCurrent, hasPo, onLock, activeView, onToggleView }) {
   return (
     <header className="app-header no-print">
       <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
@@ -26,10 +26,20 @@ export default function Navbar({ onLoadSample, onExportAll, onPrintCurrent, hasP
       </div>
 
       <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <button
+          className={`btn ${activeView === 'ireps' ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => onToggleView(activeView === 'ireps' ? 'generator' : 'ireps')}
+          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', borderColor: 'var(--gold)' }}
+        >
+          <Search size={14} color={activeView === 'ireps' ? '#000' : '#d4af37'} />
+          {activeView === 'ireps' ? 'Doc Studio' : 'IREPS Tender Search'}
+        </button>
+
         <button className="btn btn-outline" onClick={onLoadSample} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
           <Sparkles size={14} color="#d4af37" />
           Load Sample PO
         </button>
+
 
         {hasPo && (
           <>
