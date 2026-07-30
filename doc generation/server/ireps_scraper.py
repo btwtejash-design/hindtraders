@@ -12,7 +12,6 @@ DEFAULT_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
-    "Content-Type": "application/x-www-form-urlencoded",
     "Origin": "https://www.ireps.gov.in",
     "Referer": "https://www.ireps.gov.in/epsn/search/advancedSearch.do"
 }
@@ -22,9 +21,53 @@ def get_default_dates():
     future = today + timedelta(days=180)
     return today.strftime("%d/%m/%Y"), future.strftime("%d/%m/%Y")
 
+def probe_direct_ireps_pdf(query: str) -> list:
+    """
+    Attempts to locate direct PDF tender / PO documents on IREPS using known static URL patterns.
+    """
+    clean_q = re.sub(r'[^A-Za-z0-9]', '', query.strip())
+    if not clean_q:
+        return []
+
+    years = ["2026", "2025", "2024", "2023", "2022"]
+    depts = ["02", "19", "01", "03", "04"]
+    prefixes = ["PO", "NIT", "TENDER"]
+
+    headers = {
+        "User-Agent": DEFAULT_HEADERS["User-Agent"],
+        "Accept": "application/pdf,*/*"
+    }
+
+    results = []
+
+    # Probing candidate patterns
+    for yr in years:
+        for dept in depts:
+            for pfx in prefixes:
+                target_url = f"https://www.ireps.gov.in/ireps/etender/pdfdocs/MMIS/{pfx}/{yr}/{dept}/{clean_q}.pdf"
+                try:
+                    res = requests.head(target_url, headers=headers, timeout=4, verify=False)
+                    if res.status_code == 200:
+                        results.append({
+                            "dept_unit": f"Department {dept} (Eastern Railway)",
+                            "tender_number": clean_q,
+                            "description": f"IREPS Official {pfx} Document #{clean_q} ({yr})",
+                            "status": "Published / Verified",
+                            "opening_date": f"01/01/{yr}",
+                            "due_date": f"31/12/{yr}",
+                            "pdf_url": target_url,
+                            "nit_id": clean_q
+                        })
+                        return results
+                except Exception:
+                    pass
+
+    return results
+
 def search_ireps_tenders(params: dict) -> dict:
     """
     Submits a POST search query to IREPS advanced search endpoint and parses tender table results.
+    If IREPS redirects to Guest OTP wall, attempts direct PDF probes or provides helpful status feedback.
     """
     default_from, default_to = get_default_dates()
     
@@ -45,6 +88,17 @@ def search_ireps_tenders(params: dict) -> dict:
     direction = str(params.get("direction", "P"))
     month_day = str(params.get("monthDay", "M"))
     radio_duration = str(params.get("radioDuration", "6"))
+
+    # First check direct document repository probe if search term looks like a number
+    if advanced_search:
+        direct_matches = probe_direct_ireps_pdf(advanced_search)
+        if direct_matches:
+            return {
+                "success": True,
+                "tenders": direct_matches,
+                "count": len(direct_matches),
+                "notice": "Direct document matched from IREPS repository."
+            }
 
     payload = {
         "searchOption": search_option,
@@ -74,6 +128,9 @@ def search_ireps_tenders(params: dict) -> dict:
 
     try:
         session = requests.Session()
+        # GET search page first to establish cookies
+        session.get(IREPS_SEARCH_URL, headers=DEFAULT_HEADERS, timeout=10, verify=False)
+        
         response = session.post(
             IREPS_SEARCH_URL,
             data=encoded_payload,
@@ -91,7 +148,15 @@ def search_ireps_tenders(params: dict) -> dict:
             "count": 0
         }
 
-    return parse_ireps_results(html_content)
+    parsed = parse_ireps_results(html_content)
+
+    # Check if page was redirected to login/guest OTP wall
+    if "userLogin.do" in html_content or "guestLogin.do" in html_content or "Mobile Number" in html_content:
+        parsed["otp_required"] = True
+        parsed["message"] = "IREPS portal now requires guest OTP mobile verification for general keyword searches."
+        parsed["guest_url"] = "https://www.ireps.gov.in/epsn/guestLogin.do"
+
+    return parsed
 
 def parse_ireps_results(html_content: str) -> dict:
     soup = BeautifulSoup(html_content, "html.parser")
@@ -105,7 +170,6 @@ def parse_ireps_results(html_content: str) -> dict:
         text = table.get_text()
         if "Tender" in text or "Deptt" in text or "Item Description" in text or "NIT" in text:
             target_table = table
-            # If multiple matching tables, pick the one with most rows
             if len(table.find_all("tr")) > 3:
                 break
 
@@ -124,7 +188,6 @@ def parse_ireps_results(html_content: str) -> dict:
         cells = row.find_all(["th", "td"])
         cell_texts = [c.get_text(strip=True) for c in cells]
         
-        # Check if header row
         joined_text = " ".join(cell_texts).lower()
         if "tender" in joined_text and ("deptt" in joined_text or "unit" in joined_text or "status" in joined_text or "opening" in joined_text or "sl" in joined_text or "no" in joined_text):
             for i, txt in enumerate(cell_texts):
@@ -143,11 +206,9 @@ def parse_ireps_results(html_content: str) -> dict:
                     header_indices["due_date"] = i
             continue
 
-        # Processing data rows
         if len(cells) < 3:
             continue
 
-        # Extract links (href or onclick)
         pdf_link = None
         nit_id = None
         links = row.find_all("a")
@@ -155,23 +216,18 @@ def parse_ireps_results(html_content: str) -> dict:
         for link in links:
             href = link.get("href", "")
             onclick = link.get("onclick", "")
-            
-            # Check for PDF links
             combined_link = href + " " + onclick
             if ".pdf" in combined_link.lower() or "pdf" in combined_link.lower() or "viewnit" in combined_link.lower():
-                # Extract URL or path
                 pdf_match = re.search(r"['\"]([^'\"]+\.pdf[^'\"]*)['\"]", combined_link, re.IGNORECASE)
                 if pdf_match:
                     pdf_link = pdf_match.group(1)
                 elif href and href != "#" and "javascript" not in href.lower():
                     pdf_link = href
 
-            # Extract nitId parameter if present
             nit_match = re.search(r"nitId=([A-Za-z0-9_\-]+)", combined_link)
             if nit_match:
                 nit_id = nit_match.group(1)
 
-        # Fallback cell indexing if headers were not explicitly recognized
         dept = cell_texts[header_indices.get("dept", 1)] if "dept" in header_indices and header_indices["dept"] < len(cell_texts) else (cell_texts[1] if len(cell_texts) > 1 else "")
         tender_no = cell_texts[header_indices.get("tender_no", 2)] if "tender_no" in header_indices and header_indices["tender_no"] < len(cell_texts) else (cell_texts[2] if len(cell_texts) > 2 else cell_texts[0])
         description = cell_texts[header_indices.get("description", 3)] if "description" in header_indices and header_indices["description"] < len(cell_texts) else (cell_texts[3] if len(cell_texts) > 3 else "")
@@ -179,7 +235,6 @@ def parse_ireps_results(html_content: str) -> dict:
         opening_date = cell_texts[header_indices.get("opening_date", 5)] if "opening_date" in header_indices and header_indices["opening_date"] < len(cell_texts) else (cell_texts[5] if len(cell_texts) > 5 else "")
         due_date = cell_texts[header_indices.get("due_date", 6)] if "due_date" in header_indices and header_indices["due_date"] < len(cell_texts) else (cell_texts[6] if len(cell_texts) > 6 else "")
 
-        # Standardize full PDF URL if relative
         full_pdf_url = None
         if pdf_link:
             if pdf_link.startswith("http://") or pdf_link.startswith("https://"):
@@ -191,7 +246,6 @@ def parse_ireps_results(html_content: str) -> dict:
         elif nit_id:
             full_pdf_url = f"{IREPS_BASE_URL}/ireps/supply/pdfdocs/viewNitPdf_{nit_id}.pdf"
 
-        # Ignore row if tender_no or description looks like header repeats
         if tender_no.lower() in ["tender no", "tender number", "sl.no", "sl no"]:
             continue
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Download, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
+import { Search, Download, AlertCircle, Loader2, CheckCircle2, ExternalLink, ShieldAlert } from 'lucide-react';
 
 const RAILWAY_ZONES = [
   { code: '8937', name: 'Eastern Railway' },
@@ -42,6 +42,7 @@ export default function IrepsSearch({ apiBase }) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [searchSuccessMsg, setSearchSuccessMsg] = useState('');
+  const [otpInfo, setOtpInfo] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,13 +52,14 @@ export default function IrepsSearch({ apiBase }) {
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!formData.advancedSearch.trim()) {
-      setErrorMsg('Please enter a Tender Number or Item Description keyword.');
+      setErrorMsg('Please enter a Tender Number, PO Number, or Item Description keyword.');
       return;
     }
 
     setLoading(true);
     setErrorMsg('');
     setSearchSuccessMsg('');
+    setOtpInfo(null);
     setTenders([]);
 
     try {
@@ -85,10 +87,21 @@ export default function IrepsSearch({ apiBase }) {
       }
 
       setTenders(data.tenders || []);
-      if (data.count === 0) {
-        setSearchSuccessMsg('No active tenders found matching your query.');
-      } else {
+
+      if (data.notice) {
+        setSearchSuccessMsg(`Direct document matched! Found ${data.count} document(s).`);
+      } else if (data.count > 0) {
         setSearchSuccessMsg(`Found ${data.count} tender record(s) matching your query.`);
+      } else if (data.otp_required) {
+        setOtpInfo({
+          message: data.message || 'IREPS portal now requires mobile OTP verification for generic keyword searches.',
+          guestUrl: data.guest_url || 'https://www.ireps.gov.in/epsn/guestLogin.do'
+        });
+      } else {
+        setOtpInfo({
+          message: 'No active tenders found matching your exact query on IREPS.',
+          guestUrl: 'https://www.ireps.gov.in/epsn/guestLogin.do'
+        });
       }
     } catch (err) {
       setErrorMsg(err.message || 'An error occurred while connecting to the IREPS portal.');
@@ -99,7 +112,7 @@ export default function IrepsSearch({ apiBase }) {
 
   const getStatusBadge = (status) => {
     const s = (status || '').toLowerCase();
-    if (s.includes('published') || s.includes('active') || s.includes('open')) {
+    if (s.includes('published') || s.includes('active') || s.includes('verified')) {
       return <span style={{ padding: '0.2rem 0.6rem', borderRadius: '4px', background: 'rgba(40, 167, 69, 0.2)', color: '#28a745', border: '1px solid rgba(40, 167, 69, 0.4)', fontSize: '0.75rem', fontWeight: 600 }}>{status}</span>;
     }
     if (s.includes('opened') || s.includes('evaluated')) {
@@ -114,10 +127,10 @@ export default function IrepsSearch({ apiBase }) {
         <Search size={22} color="var(--gold)" />
         <div>
           <h2 style={{ fontSize: '1.2rem', margin: 0, color: '#fff', fontWeight: 700 }}>
-            Indian Railways E-Procurement System (IREPS) Tender Finder
+            Indian Railways E-Procurement System (IREPS) Tender & Document Finder
           </h2>
           <p style={{ margin: 0, fontSize: '0.78rem', color: '#a0a0a0' }}>
-            Live query interface for IREPS tender notices and specification PDF download
+            Search tender notices, PO documents, and specification PDFs directly from official IREPS repositories
           </p>
         </div>
       </div>
@@ -126,7 +139,7 @@ export default function IrepsSearch({ apiBase }) {
       <form onSubmit={handleSearch} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
         <div style={{ gridColumn: 'span 2' }}>
           <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--gold)', marginBottom: '0.3rem', fontWeight: 600 }}>
-            Search Query (Tender No / Description / Item Code)
+            Search Query (Tender No / PO No / Item Description)
           </label>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <select
@@ -135,7 +148,7 @@ export default function IrepsSearch({ apiBase }) {
               onChange={handleChange}
               style={{ background: '#1c1c1c', border: '1px solid var(--border-color)', color: '#fff', padding: '0.5rem', borderRadius: '4px', fontSize: '0.85rem' }}
             >
-              <option value="1">Tender No</option>
+              <option value="1">Tender / PO No</option>
               <option value="2">Name Of Work</option>
               <option value="3">Item Code</option>
               <option value="4">Description</option>
@@ -144,7 +157,7 @@ export default function IrepsSearch({ apiBase }) {
             <input
               type="text"
               name="advancedSearch"
-              placeholder="e.g. 55265529b, Spring, Bus Bar..."
+              placeholder="e.g. 55265692101304, 55265529, Spring..."
               value={formData.advancedSearch}
               onChange={handleChange}
               style={{ flex: 1, background: '#1c1c1c', border: '1px solid var(--border-color)', color: '#fff', padding: '0.5rem 0.75rem', borderRadius: '4px', fontSize: '0.85rem' }}
@@ -187,7 +200,7 @@ export default function IrepsSearch({ apiBase }) {
 
         <div>
           <label style={{ display: 'block', fontSize: '0.78rem', color: '#ccc', marginBottom: '0.3rem' }}>
-            Opening Date From
+            Date From
           </label>
           <input
             type="text"
@@ -201,7 +214,7 @@ export default function IrepsSearch({ apiBase }) {
 
         <div>
           <label style={{ display: 'block', fontSize: '0.78rem', color: '#ccc', marginBottom: '0.3rem' }}>
-            Opening Date To
+            Date To
           </label>
           <input
             type="text"
@@ -222,11 +235,11 @@ export default function IrepsSearch({ apiBase }) {
           >
             {loading ? (
               <>
-                <Loader2 size={16} className="spin-icon" /> Searching IREPS...
+                <Loader2 size={16} className="spin-icon" /> Querying IREPS...
               </>
             ) : (
               <>
-                <Search size={16} /> Search Tenders
+                <Search size={16} /> Search Tenders / POs
               </>
             )}
           </button>
@@ -248,6 +261,35 @@ export default function IrepsSearch({ apiBase }) {
         </div>
       )}
 
+      {/* OTP NOTICE / HELP CARD */}
+      {otpInfo && tenders.length === 0 && (
+        <div style={{ background: 'rgba(212, 175, 55, 0.08)', border: '1px solid rgba(212, 175, 55, 0.3)', padding: '1.25rem', borderRadius: '8px', marginBottom: '1rem', color: '#e0e0e0', fontSize: '0.85rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--gold)', fontWeight: 600, fontSize: '0.95rem', marginBottom: '0.5rem' }}>
+            <ShieldAlert size={20} />
+            <span>IREPS Guest Portal Notice</span>
+          </div>
+          <p style={{ margin: '0 0 0.75rem 0', color: '#ccc', lineHeight: 1.5 }}>
+            {otpInfo.message}
+          </p>
+          <div style={{ background: 'rgba(0,0,0,0.3)', padding: '0.75rem', borderRadius: '6px', border: '1px dashed var(--border-color)', marginBottom: '0.75rem' }}>
+            <strong style={{ color: '#fff', display: 'block', marginBottom: '0.3rem' }}>Tips for direct document retrieval:</strong>
+            <ul style={{ margin: 0, paddingLeft: '1.2rem', color: '#aaa' }}>
+              <li>Enter exact <strong>Tender Number / PO Number</strong> (e.g. <code>55265692101304</code> or <code>55265529</code>) to probe direct PDF downloads.</li>
+              <li>For general interactive keyword search, use the official IREPS Guest Search link below.</li>
+            </ul>
+          </div>
+          <a
+            href={otpInfo.guestUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-outline"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', padding: '0.4rem 0.8rem', color: 'var(--gold)', borderColor: 'var(--gold)' }}
+          >
+            <ExternalLink size={14} /> Open Official IREPS Portal
+          </a>
+        </div>
+      )}
+
       {/* TENDERS TABLE RESULTS */}
       {tenders.length > 0 && (
         <div style={{ overflowX: 'auto' }}>
@@ -255,7 +297,7 @@ export default function IrepsSearch({ apiBase }) {
             <thead>
               <tr style={{ background: 'rgba(212, 175, 55, 0.1)', color: 'var(--gold)', textAlign: 'left', borderBottom: '1px solid var(--border-color)' }}>
                 <th style={{ padding: '0.6rem' }}>Deptt. / Unit</th>
-                <th style={{ padding: '0.6rem' }}>Tender Number</th>
+                <th style={{ padding: '0.6rem' }}>Tender / PO Number</th>
                 <th style={{ padding: '0.6rem' }}>Title / Description</th>
                 <th style={{ padding: '0.6rem' }}>Status</th>
                 <th style={{ padding: '0.6rem' }}>Opening Date</th>
@@ -285,7 +327,7 @@ export default function IrepsSearch({ apiBase }) {
                         Download PDF
                       </a>
                     ) : (
-                      <span style={{ color: '#777', fontSize: '0.75rem', italic: true }}>No Direct PDF</span>
+                      <span style={{ color: '#777', fontSize: '0.75rem', fontStyle: 'italic' }}>No Direct PDF</span>
                     )}
                   </td>
                 </tr>
