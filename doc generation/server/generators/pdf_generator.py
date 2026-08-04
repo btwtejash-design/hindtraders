@@ -2,7 +2,14 @@ import os
 import io
 from xhtml2pdf import pisa
 from typing import Dict, Any
-from server.generators.num_to_words import amount_to_words
+try:
+    from generators.num_to_words import amount_to_words
+except ImportError:
+    try:
+        from .num_to_words import amount_to_words
+    except ImportError:
+        from server.generators.num_to_words import amount_to_words
+
 
 def html_to_pdf(html_content: str, output_path: str) -> str:
     """Converts HTML string to a PDF file on disk"""
