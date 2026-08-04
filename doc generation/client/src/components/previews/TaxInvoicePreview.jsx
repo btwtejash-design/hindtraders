@@ -114,7 +114,7 @@ export default function TaxInvoicePreview({ poData }) {
             <th style={{ border: '1px solid #000', padding: '5px', width: '6%' }}>Sr. No.</th>
             <th style={{ border: '1px solid #000', padding: '5px', width: '50%' }}>Description</th>
             <th style={{ border: '1px solid #000', padding: '5px', width: '10%' }}>HSN</th>
-            <th style={{ border: '1px solid #000', padding: '5px', width: '12%' }}>Quantity</th>
+            <th style={{ border: '1px solid #000', padding: '5px', width: '10%' }}>Quantity (Nos)</th>
             <th style={{ border: '1px solid #000', padding: '5px', width: '12%' }}>Rate/ Unit (₹)</th>
             <th style={{ border: '1px solid #000', padding: '5px', width: '12%' }}>Total (₹)</th>
           </tr>
@@ -127,7 +127,7 @@ export default function TaxInvoicePreview({ poData }) {
                 <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>{item.sr_no}</td>
                 <td style={{ border: '1px solid #000', padding: '5px' }}>{item.description}</td>
                 <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>{item.hsn}</td>
-                <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>{item.quantity_display || `${item.quantity} ${item.unit || 'Nos'}`}</td>
+                <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>{item.quantity}</td>
                 <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'right' }}>₹ {parseFloat(item.rate).toFixed(2)}</td>
                 <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'right' }}>₹ {rowTot.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
               </tr>

@@ -23,29 +23,13 @@ def generate_gc_docx(data: Dict[str, Any], output_path: str) -> str:
         section.right_margin = Inches(0.7)
 
     # 1. Company Header
-    candidate_paths = [
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "sample", "picture.png")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sample", "picture.png")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "client", "src", "assets", "picture.png")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "client", "public", "picture.png")),
-    ]
-    picture_path = None
-    for p in candidate_paths:
-        if os.path.exists(p):
-            picture_path = p
-            break
-
     p_title = doc.add_paragraph()
     p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    if picture_path and os.path.exists(picture_path):
-        run_title = p_title.add_run()
-        run_title.add_picture(picture_path, height=Inches(0.55))
-    else:
-        run_title = p_title.add_run("Hind Traders")
-        run_title.font.name = "Georgia"
-        run_title.font.size = Pt(28)
-        run_title.font.italic = True
-        run_title.font.bold = True
+    run_title = p_title.add_run("Hind Traders")
+    run_title.font.name = "Georgia"
+    run_title.font.size = Pt(28)
+    run_title.font.italic = True
+    run_title.font.bold = True
 
     p_addr = doc.add_paragraph()
     p_addr.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -191,7 +175,24 @@ def generate_gc_docx(data: Dict[str, Any], output_path: str) -> str:
     r_valid = p_valid.add_run("The warranty/guarantee shall remain valid as per the IRS terms and conditions.")
     r_valid.font.name = "Arial"
     r_valid.font.size = Pt(9.5)
+    r_valid.font.bold = True
+
+    # 6. Stamp and Signature Footer
+    p_stamp = doc.add_paragraph()
+    p_stamp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    p_stamp.paragraph_format.space_before = Pt(20)
+    
+    stamp_path = os.path.join(os.path.dirname(__file__), "..", "..", "sample", "hind-stamp.jpg")
+    if os.path.exists(stamp_path):
+        p_stamp.add_run().add_picture(stamp_path, width=Inches(1.5))
+        p_stamp.add_run("\n")
+    
+    r_stamp = p_stamp.add_run("HIND TRADERS\nProprietor")
+    r_stamp.font.name = "Arial"
+    r_stamp.font.size = Pt(10)
+    r_stamp.font.bold = True
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     doc.save(output_path)
     return output_path
+

@@ -1,20 +1,11 @@
 import os
 import io
-import base64
 from xhtml2pdf import pisa
 from typing import Dict, Any
-try:
-    from server.generators.num_to_words import amount_to_words
-except ImportError:
-    try:
-        from generators.num_to_words import amount_to_words
-    except ImportError:
-        from num_to_words import amount_to_words
+from server.generators.num_to_words import amount_to_words
 
 def html_to_pdf(html_content: str, output_path: str) -> str:
     """Converts HTML string to a PDF file on disk"""
-    # Replace Rupee symbols and entities to prevent missing glyph black boxes in xhtml2pdf
-    html_content = html_content.replace('&#8377;', 'Rs. ').replace('₹', 'Rs. ').replace('&rupee;', 'Rs. ')
     dirname = os.path.dirname(output_path)
     if dirname:
         os.makedirs(dirname, exist_ok=True)
@@ -38,36 +29,16 @@ def generate_tax_invoice_pdf(data: Dict[str, Any], output_path: str) -> str:
     items_rows_html = ""
     for item in items:
         tot = round(float(item.get("quantity", 0)) * float(item.get("rate", 0)), 2)
-        qty_str = item.get("quantity_display", f"{item.get('quantity', 1)} {item.get('unit', 'Nos')}")
         items_rows_html += f"""
         <tr style="height: 60px;">
             <td style="border: 1px solid #000; text-align: center; padding: 4px;">{item.get('sr_no', 1)}</td>
             <td style="border: 1px solid #000; padding: 4px;">{item.get('description', '')}</td>
             <td style="border: 1px solid #000; text-align: center; padding: 4px;">{item.get('hsn', '7318')}</td>
-            <td style="border: 1px solid #000; text-align: center; padding: 4px;">{qty_str}</td>
-            <td style="border: 1px solid #000; text-align: right; padding: 4px;">Rs. {item.get('rate', 0):.2f}</td>
-            <td style="border: 1px solid #000; text-align: right; padding: 4px;">Rs. {tot:.2f}</td>
+            <td style="border: 1px solid #000; text-align: center; padding: 4px;">{item.get('quantity', 1)}</td>
+            <td style="border: 1px solid #000; text-align: right; padding: 4px;">{item.get('rate', 0):.2f}</td>
+            <td style="border: 1px solid #000; text-align: right; padding: 4px;">{tot:.2f}</td>
         </tr>
         """
-
-    candidate_paths = [
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "sample", "picture.png")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sample", "picture.png")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "client", "src", "assets", "picture.png")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "client", "public", "picture.png")),
-    ]
-    picture_path = None
-    for p in candidate_paths:
-        if os.path.exists(p):
-            picture_path = p
-            break
-
-    if picture_path and os.path.exists(picture_path):
-        with open(picture_path, "rb") as img_file:
-            b64_img = base64.b64encode(img_file.read()).decode('utf-8')
-        header_html = f'<div style="text-align: center; margin-top: 6px; margin-bottom: 4px;"><img src="data:image/png;base64,{b64_img}" style="height: 52px;" /></div>'
-    else:
-        header_html = f'<div class="main-title">{data["vendor"]["name"].upper()}</div>'
 
     html = f"""
     <!DOCTYPE html>
@@ -81,90 +52,89 @@ def generate_tax_invoice_pdf(data: Dict[str, Any], output_path: str) -> str:
                 @frame footer_frame {{
                     -pdf-frame-content: footerContent;
                     bottom: 10mm;
+                    margin-left: 15mm;
+                    margin-right: 15mm;
                     height: 25mm;
                 }}
             }}
             body {{
                 font-family: Helvetica, Arial, sans-serif;
-                font-size: 9.5pt;
-                line-height: 1.3;
+                font-size: 9pt;
+                line-height: 1.25;
                 color: #000;
             }}
-            .header-meta {{
+            .title {{
+                font-size: 16pt;
                 font-weight: bold;
-                font-size: 9pt;
-            }}
-            .main-title {{
-                font-size: 18pt;
-                font-weight: bold;
-                text-align: center;
-                margin-top: 10px;
-                margin-bottom: 2px;
-            }}
-            .sub-title {{
-                font-size: 10pt;
-                font-weight: bold;
-                text-align: center;
-                margin-bottom: 4px;
-            }}
-            .badge-box {{
-                text-align: center;
-                border: 1px solid #000;
-                border-radius: 4px;
-                padding: 2px 6px;
-                font-size: 8pt;
-                margin: 0 auto 6px auto;
-                width: 90%;
-            }}
-            .address {{
-                text-align: center;
-                font-weight: bold;
-                font-size: 9.5pt;
-                margin-bottom: 10px;
+                text-align: right;
+                margin-bottom: 8px;
             }}
             table {{
                 width: 100%;
                 border-collapse: collapse;
             }}
-            th {{
+            .details-table {{
+                width: 45%;
+                float: right;
+                margin-bottom: 10px;
                 border: 1px solid #000;
-                background-color: #f0f0f0;
-                padding: 4px;
-                font-size: 9pt;
             }}
-            td {{
-                font-size: 9pt;
+            .details-table td, .details-table th {{
+                border: 1px solid #000;
+                padding: 3px 5px;
+            }}
+            .box-table {{
+                width: 100%;
+                margin-bottom: 10px;
+            }}
+            .box-table td {{
+                width: 50%;
+                border: 1px solid #000;
+                vertical-align: top;
+                padding: 6px;
+            }}
+            .header-bg {{
+                background-color: #d9d9d9;
+                font-weight: bold;
+            }}
+            .items-table th {{
+                border: 1px solid #000;
+                background-color: #d9d9d9;
+                padding: 4px;
             }}
         </style>
     </head>
     <body>
-        <table style="width: 100%; margin-bottom: 6px;">
-            <tr>
-                <td style="font-weight: bold;">GSTIN:- {data['vendor']['gstin']}</td>
-                <td style="text-align: center; font-weight: bold; text-decoration: underline; font-size: 12pt;">TAX INVOICE</td>
-                <td style="text-align: right; font-weight: bold;">Mob:- {data['vendor']['phone']}</td>
-            </tr>
-        </table>
+        <div class="title">TAX INVOICE</div>
 
-        {header_html}
-        <div class="sub-title">RAILWAY CONTRACTOR & SUPPLIER</div>
-        <div class="badge-box">Manufactures:- Diesel Locomotives Spare Parts, Ferrous & Non Ferrous Components and General Order Suppliers</div>
-        <div class="address">{data['vendor']['address'].upper()}</div>
+        <div style="text-align: right; margin-bottom: 10px;">
+            <table class="details-table" align="right">
+                <tr class="header-bg"><td colspan="2">DETAILS</td></tr>
+                <tr><td style="font-weight: bold;">INVOICE NO:</td><td>{data.get('invoice_no', '42')}</td></tr>
+                <tr><td style="font-weight: bold;">DATE:</td><td>{data.get('invoice_date', '15-06-2026')}</td></tr>
+                <tr><td style="font-weight: bold;">PO.NO:</td><td>{data.get('po_number', '')}</td></tr>
+                <tr><td style="font-weight: bold;">DATE:</td><td>{data.get('po_date', '')}</td></tr>
+                <tr><td style="font-weight: bold;">DELIVERY CHAALAN NO:</td><td>{data.get('challan_no', '44')}</td></tr>
+                <tr><td style="font-weight: bold;">DATE:</td><td>{data.get('challan_date', '24-07-2026')}</td></tr>
+                <tr><td style="font-weight: bold;">CRN.No- {data.get('crn_no', '')}</td><td style="font-weight: bold;">DATE: {data.get('crn_date', '')}</td></tr>
+            </table>
+        </div>
 
-        <table style="border: 1px solid #000; margin-bottom: 10px;">
+        <div style="clear: both; height: 5px;"></div>
+
+        <table class="box-table">
             <tr>
-                <td style="width: 50%; border-right: 1px solid #000; vertical-align: top; padding: 4px;">
-                    <b>INVOICE NO:</b> {data.get('invoice_no', '42')}<br/>
-                    <b>DATE:</b> {data.get('invoice_date', '15-06-2026')}<br/>
-                    <b>PURCHASE ORDER NO:</b> {data.get('po_number', '')}<br/>
-                    <b>DATE:</b> {data.get('po_date', '')}<br/>
-                    <b>DELIVERY CHAALAN NO:</b> {data.get('challan_no', '42')}<br/>
-                    <b>DATE:</b> {data.get('challan_date', '15-06-2026')}<br/>
-                    <b>CRN.No- {data.get('crn_no', '')}</b> &nbsp;&nbsp; <b>DATE: {data.get('crn_date', '')}</b>
+                <td>
+                    <div class="header-bg" style="padding: 2px 4px; margin-bottom: 4px;">FROM</div>
+                    <b>COMPANY:</b> {data['vendor']['name']}<br/>
+                    <b>ADDRESS:</b> {data['vendor']['address']}<br/>
+                    <b>PHONE:</b> {data['vendor']['phone']}<br/>
+                    <b>E-MAIL:</b> {data['vendor']['email']}<br/>
+                    <b>GSTIN:</b> {data['vendor']['gstin']}
                 </td>
-                <td style="width: 50%; vertical-align: top; padding: 4px;">
-                    <b>BILL TO:</b><br/>
-                    <b>NAME:</b> {data['bill_to']['name']}<br/>
+                <td>
+                    <div class="header-bg" style="padding: 2px 4px; margin-bottom: 4px;">BILL TO</div>
+                    <b>TO:</b> {data['bill_to']['name']}<br/>
                     <b>DEPARTMENT:</b> {data['bill_to']['department']}<br/>
                     <b>LOCATION:</b> {data['bill_to']['location']}<br/>
                     <b>CONSIGNEE:</b> {data['bill_to']['consignee']}<br/>
@@ -177,11 +147,11 @@ def generate_tax_invoice_pdf(data: Dict[str, Any], output_path: str) -> str:
             <thead>
                 <tr>
                     <th style="width: 6%;">Sr. No.</th>
-                    <th style="width: 48%;">Description</th>
+                    <th style="width: 50%;">Description</th>
                     <th style="width: 10%;">HSN</th>
-                    <th style="width: 12%;">Quantity</th>
-                    <th style="width: 12%;">Rate/ Unit (Rs.)</th>
-                    <th style="width: 12%;">Total (Rs.)</th>
+                    <th style="width: 10%;">Quantity (Nos)</th>
+                    <th style="width: 12%;">Rate/ Unit (&#8377;)</th>
+                    <th style="width: 12%;">Total (&#8377;)</th>
                 </tr>
             </thead>
             <tbody>
@@ -195,19 +165,19 @@ def generate_tax_invoice_pdf(data: Dict[str, Any], output_path: str) -> str:
                     <b>Grand Total in Words:</b> {words_total}
                 </td>
                 <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">Taxable Amount:</td>
-                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">Rs. {taxable_sum:.2f}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">&#8377; {taxable_sum:.2f}</td>
             </tr>
             <tr>
                 <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">SGST: {int(sgst_rate)}%</td>
-                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">Rs. {sgst_amount:.2f}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">&#8377; {sgst_amount:.2f}</td>
             </tr>
             <tr>
                 <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">CGST: {int(cgst_rate)}%</td>
-                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">Rs. {cgst_amount:.2f}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">&#8377; {cgst_amount:.2f}</td>
             </tr>
             <tr>
                 <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">Grand Total:</td>
-                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">Rs. {grand_total:.2f}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">&#8377; {grand_total:.2f}</td>
             </tr>
         </table>
 
@@ -242,25 +212,6 @@ def generate_challan_pdf(data: Dict[str, Any], output_path: str) -> str:
             <td style="border: 1px solid #000; text-align: center; padding: 6px;">{qty_str}</td>
         </tr>
         """
-
-    candidate_paths = [
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "sample", "picture.png")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sample", "picture.png")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "client", "src", "assets", "picture.png")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "client", "public", "picture.png")),
-    ]
-    picture_path = None
-    for p in candidate_paths:
-        if os.path.exists(p):
-            picture_path = p
-            break
-
-    if picture_path and os.path.exists(picture_path):
-        with open(picture_path, "rb") as img_file:
-            b64_img = base64.b64encode(img_file.read()).decode('utf-8')
-        header_html = f'<div style="text-align: center; margin-top: 6px; margin-bottom: 4px;"><img src="data:image/png;base64,{b64_img}" style="height: 52px;" /></div>'
-    else:
-        header_html = f'<div class="main-title">{data["vendor"]["name"].upper()}</div>'
 
     html = f"""
     <!DOCTYPE html>
@@ -340,7 +291,7 @@ def generate_challan_pdf(data: Dict[str, Any], output_path: str) -> str:
             </tr>
         </table>
 
-        {header_html}
+        <div class="main-title">{data['vendor']['name'].upper()}</div>
         <div class="sub-title">RAILWAY CONTRACTOR & SUPPLIER</div>
         <div class="badge-box">Manufactures:- Diesel Locomotives Spare Parts, Ferrous & Non Ferrous Components and General Order Suppliers</div>
         <div class="address">{data['vendor']['address'].upper()}</div>
@@ -397,34 +348,19 @@ def generate_gc_pdf(data: Dict[str, Any], output_path: str) -> str:
     if not consignee_name.endswith('.'):
         consignee_name += "."
 
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    stamp_path = os.path.join(base_dir, "sample", "hind-stamp.jpg")
+    stamp_img = stamp_path.replace("\\", "/") if os.path.exists(stamp_path) else ""
+
     items_html = ""
     for item in items:
         qty_str = item.get("quantity_display", f"{item.get('quantity', 1)} Nos")
         items_html += f"""
-        <div style="margin-bottom: 10px;">
+        <div style="margin-bottom: 8px;">
             <div>{item.get('sr_no', 1)}. {item.get('description', '')}</div>
             <div style="font-weight: bold; margin-top: 2px;">Quantity: {qty_str}</div>
         </div>
         """
-
-    candidate_paths = [
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "sample", "picture.png")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sample", "picture.png")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "client", "src", "assets", "picture.png")),
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "client", "public", "picture.png")),
-    ]
-    picture_path = None
-    for p in candidate_paths:
-        if os.path.exists(p):
-            picture_path = p
-            break
-
-    if picture_path and os.path.exists(picture_path):
-        with open(picture_path, "rb") as img_file:
-            b64_img = base64.b64encode(img_file.read()).decode('utf-8')
-        header_html = f'<div style="text-align: center; margin-bottom: 4px;"><img src="data:image/png;base64,{b64_img}" style="height: 52px;" /></div>'
-    else:
-        header_html = f'<div class="company-name">{data["vendor"]["name"]}</div>'
 
     html = f"""
     <!DOCTYPE html>
@@ -434,7 +370,14 @@ def generate_gc_pdf(data: Dict[str, Any], output_path: str) -> str:
         <style>
             @page {{
                 size: A4 portrait;
-                margin: 12mm 15mm;
+                margin: 12mm 15mm 32mm 15mm;
+                @frame footer_frame {{
+                    -pdf-frame-content: footerContent;
+                    bottom: 8mm;
+                    margin-left: 15mm;
+                    margin-right: 15mm;
+                    height: 25mm;
+                }}
             }}
             body {{
                 font-family: Helvetica, Arial, sans-serif;
@@ -461,23 +404,23 @@ def generate_gc_pdf(data: Dict[str, Any], output_path: str) -> str:
             }}
             .divider {{
                 border-bottom: 1.5px solid #000;
-                margin: 8px 0 15px 0;
+                margin: 8px 0 12px 0;
             }}
             .doc-title {{
                 font-size: 12pt;
                 font-weight: bold;
                 text-align: center;
-                margin-bottom: 15px;
+                margin-bottom: 12px;
             }}
             .boxed-content {{
                 border: 1px solid #000;
-                padding: 12px;
-                min-height: 350px;
+                padding: 10px;
+                min-height: 320px;
             }}
         </style>
     </head>
     <body>
-        {header_html}
+        <div class="company-name">{data['vendor']['name']}</div>
         <div class="company-address">Address: - {data['vendor']['address']}</div>
 
         <table class="meta-row" style="width: 100%;">
@@ -495,14 +438,14 @@ def generate_gc_pdf(data: Dict[str, Any], output_path: str) -> str:
 
         <div class="doc-title">WARRANTY / GUARANTEE CERTIFICATE</div>
 
-        <table style="width: 100%; font-weight: bold; margin-bottom: 12px;">
+        <table style="width: 100%; font-weight: bold; margin-bottom: 10px;">
             <tr>
                 <td>File No.:- {data.get('gc_file_no', 'HT/GC-WC/26-27')}</td>
                 <td style="text-align: right;">Date: {data.get('gc_date', '24/07/2026')}</td>
             </tr>
         </table>
 
-        <div style="font-weight: bold; margin-bottom: 15px; line-height: 1.4;">
+        <div style="font-weight: bold; margin-bottom: 10px; line-height: 1.4;">
             To,<br/>
             The,<br/>
             {consignee_name}<br/>
@@ -510,11 +453,11 @@ def generate_gc_pdf(data: Dict[str, Any], output_path: str) -> str:
         </div>
 
         <div class="boxed-content">
-            <p style="margin-bottom: 12px;">
+            <p style="margin-bottom: 10px;">
                 This is to certify that the materials supplied under the following purchase order are guaranteed as per IRS Terms & Conditions against any manufacturing defect or poor workmanship.
             </p>
 
-            <table style="width: 100%; font-weight: bold; margin-bottom: 12px;">
+            <table style="width: 100%; font-weight: bold; margin-bottom: 10px;">
                 <tr>
                     <td>PO No.: {data.get('po_number', '')}</td>
                     <td>Dated: {data.get('po_date', '')}</td>
@@ -525,15 +468,26 @@ def generate_gc_pdf(data: Dict[str, Any], output_path: str) -> str:
                 </tr>
             </table>
 
-            <div style="font-weight: bold; margin-bottom: 8px;">Material Description:</div>
+            <div style="font-weight: bold; margin-bottom: 6px;">Material Description:</div>
 
             {items_html}
+        </div>
 
-            <div style="margin-top: 20px; font-size: 9pt;">
-                The warranty/guarantee shall remain valid as per the IRS terms and conditions.
-            </div>
+        <div id="footerContent">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="width: 60%; vertical-align: bottom; font-size: 9pt; font-weight: bold;">
+                        The warranty/guarantee shall remain valid as per the IRS terms and conditions.
+                    </td>
+                    <td style="width: 40%; text-align: right; vertical-align: bottom;">
+                        {"<img src='" + stamp_img + "' style='height: 65px;' /><br/>" if stamp_img else ""}
+                        <b style="font-size: 9pt;">HIND TRADERS<br/>Proprietor</b>
+                    </td>
+                </tr>
+            </table>
         </div>
     </body>
     </html>
     """
     return html_to_pdf(html, output_path)
+

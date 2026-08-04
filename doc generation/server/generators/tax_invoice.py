@@ -2,13 +2,7 @@ import os
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
 from typing import Dict, Any
-try:
-    from server.generators.num_to_words import amount_to_words
-except ImportError:
-    try:
-        from generators.num_to_words import amount_to_words
-    except ImportError:
-        from num_to_words import amount_to_words
+from server.generators.num_to_words import amount_to_words
 
 def generate_tax_invoice_excel(data: Dict[str, Any], output_path: str) -> str:
     """

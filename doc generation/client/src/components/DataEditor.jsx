@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Plus, Trash2 } from 'lucide-react';
+import { Settings, Info, Tag, Plus, Trash2 } from 'lucide-react';
 
 export default function DataEditor({ poData, onChange }) {
   if (!poData) return null;
@@ -14,22 +14,13 @@ export default function DataEditor({ poData, onChange }) {
 
   const handleItemChange = (index, key, value) => {
     const updatedItems = [...poData.items];
-    const item = { ...updatedItems[index], [key]: value };
-
+    updatedItems[index] = { ...updatedItems[index], [key]: value };
     // Recalculate amount if rate or quantity changes
     if (key === 'rate' || key === 'quantity') {
-      const q = parseFloat(item.quantity) || 0;
-      const r = parseFloat(item.rate) || 0;
-      item.total_amount = roundVal(q * r);
+      const q = parseFloat(updatedItems[index].quantity) || 0;
+      const r = parseFloat(updatedItems[index].rate) || 0;
+      updatedItems[index].total_amount = roundVal(q * r);
     }
-
-    if (key === 'quantity' || key === 'unit') {
-      const q = item.quantity ?? 0;
-      const u = item.unit ?? 'Nos';
-      item.quantity_display = `${q} ${u}`;
-    }
-
-    updatedItems[index] = item;
     onChange({ ...poData, items: updatedItems });
   };
 
@@ -64,14 +55,14 @@ export default function DataEditor({ poData, onChange }) {
 
   return (
     <div className="glass-card">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-        <Settings size={18} color="var(--gold)" />
-        <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#fff' }}>Document Configuration Studio</h3>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid #334155', paddingBottom: '0.5rem' }}>
+        <Settings size={18} color="#3b82f6" />
+        <h3 style={{ fontSize: '0.95rem', fontWeight: 600 }}>Document Configuration Studio</h3>
       </div>
 
       {/* TOP SECTION: Invoice No & Invoice Date */}
-      <div style={{ background: 'rgba(212, 175, 55, 0.08)', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--gold)', marginBottom: '1rem' }}>
-        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--gold)', marginBottom: '0.4rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+      <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '0.75rem', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.3)', marginBottom: '1rem' }}>
+        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#60a5fa', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
           ★ Primary Invoice & Challan Identification
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
@@ -80,7 +71,7 @@ export default function DataEditor({ poData, onChange }) {
             <input
               type="text"
               className="form-input"
-              style={{ borderColor: 'var(--gold)', fontWeight: 'bold', color: 'var(--gold)' }}
+              style={{ borderColor: '#3b82f6', fontWeight: 'bold' }}
               value={poData.invoice_no || '42'}
               onChange={(e) => handleFieldChange('invoice_no', e.target.value)}
             />
@@ -90,7 +81,7 @@ export default function DataEditor({ poData, onChange }) {
             <input
               type="text"
               className="form-input"
-              style={{ borderColor: 'var(--gold)', fontWeight: 'bold', color: 'var(--gold)' }}
+              style={{ borderColor: '#3b82f6', fontWeight: 'bold' }}
               value={poData.invoice_date || '15/06/2026'}
               onChange={(e) => handleFieldChange('invoice_date', e.target.value)}
             />
@@ -144,13 +135,13 @@ export default function DataEditor({ poData, onChange }) {
 
       {/* Consignee Input */}
       <div className="form-group" style={{ marginBottom: '1rem' }}>
-        <label className="form-label" style={{ color: 'var(--gold)' }}>
+        <label className="form-label" style={{ color: '#fbbf24' }}>
           Consignee Name (To Field for GC & Challan)
         </label>
         <input
           type="text"
           className="form-input"
-          style={{ borderColor: 'var(--gold)', fontWeight: 'bold' }}
+          style={{ borderColor: '#f59e0b', fontWeight: 'bold' }}
           value={poData.consignee || ''}
           onChange={(e) => handleFieldChange('consignee', e.target.value)}
         />
@@ -182,7 +173,7 @@ export default function DataEditor({ poData, onChange }) {
       {/* Items Section */}
       <div style={{ marginTop: '1rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', color: '#a0a0a0' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', color: '#94a3b8' }}>
             Line Items ({poData.items?.length || 0})
           </span>
           <button className="btn btn-outline" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} onClick={addItem}>
@@ -191,9 +182,9 @@ export default function DataEditor({ poData, onChange }) {
         </div>
 
         {poData.items?.map((item, idx) => (
-          <div key={idx} style={{ background: '#0d0d0d', padding: '0.75rem', borderRadius: '6px', marginBottom: '0.5rem', border: '1px solid var(--border-color)' }}>
+          <div key={idx} style={{ background: '#0f172a', padding: '0.75rem', borderRadius: '6px', marginBottom: '0.5rem', border: '1px solid #334155' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--gold)' }}>Item #{item.sr_no}</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#3b82f6' }}>Item #{item.sr_no}</span>
               {poData.items.length > 1 && (
                 <button style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }} onClick={() => removeItem(idx)}>
                   <Trash2 size={14} />
@@ -209,7 +200,7 @@ export default function DataEditor({ poData, onChange }) {
               onChange={(e) => handleItemChange(idx, 'description', e.target.value)}
             />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: '0.4rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '0.4rem' }}>
               <div>
                 <span className="form-label" style={{ fontSize: '0.7rem' }}>Qty</span>
                 <input
@@ -219,33 +210,6 @@ export default function DataEditor({ poData, onChange }) {
                   value={item.quantity}
                   onChange={(e) => handleItemChange(idx, 'quantity', parseFloat(e.target.value) || 0)}
                 />
-              </div>
-
-              <div>
-                <span className="form-label" style={{ fontSize: '0.7rem' }}>Unit</span>
-                <select
-                  className="form-input"
-                  style={{ padding: '0.2rem 0.3rem', fontSize: '0.8rem', background: '#111', color: 'var(--gold)', fontWeight: 'bold' }}
-                  value={item.unit || 'Nos'}
-                  onChange={(e) => handleItemChange(idx, 'unit', e.target.value)}
-                >
-                  <option value="Nos">Nos (Numbers)</option>
-                  <option value="Set">Set</option>
-                  <option value="Sets">Sets</option>
-                  <option value="Kg">Kg (Kilograms)</option>
-                  <option value="Mtr">Mtr (Meters)</option>
-                  <option value="SqFt">SqFt (Square Feet)</option>
-                  <option value="Pair">Pair</option>
-                  <option value="Pairs">Pairs</option>
-                  <option value="Pkt">Pkt (Packets)</option>
-                  <option value="Ltr">Ltr (Litres)</option>
-                  <option value="Box">Box</option>
-                  <option value="Dozen">Dozen</option>
-                  <option value="MT">MT (Metric Ton)</option>
-                  <option value="Quintal">Quintal</option>
-                  <option value="Roll">Roll</option>
-                  <option value="Bundle">Bundle</option>
-                </select>
               </div>
 
               <div>

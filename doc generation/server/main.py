@@ -2,17 +2,15 @@ import os
 import shutil
 import zipfile
 import tempfile
-import requests
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from fastapi import FastAPI, File, UploadFile, HTTPException, Body, Path
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from typing import Dict, Any, List
 
 try:
     from server.po_parser import parse_po_pdf
+    from server.quotation_parser import parse_quotation_input_file, get_default_quotation_data
     from server.generators.tax_invoice import generate_tax_invoice_excel
     from server.generators.challan import generate_challan_excel
     from server.generators.gc import generate_gc_docx
@@ -21,15 +19,29 @@ try:
         generate_challan_pdf,
         generate_gc_pdf
     )
+    from server.generators.quotation_pdf import (
+        generate_hind_quotation_pdf,
+        generate_yasha_quotation_pdf,
+        generate_madhu_quotation_pdf,
+        generate_quotation_bundle
+    )
+    from server.generators.quotation_excel import (
+        generate_hind_quotation_excel,
+        generate_yasha_quotation_excel,
+        generate_madhu_quotation_excel
+    )
     from server.db_manager import (
         get_all_records,
         get_record,
         save_record,
+        get_quotation_records,
+        save_quotation_record,
+        delete_record,
         update_crn_details
     )
-    from server.ireps_scraper import search_ireps_tenders, fetch_ireps_pdf
 except ImportError:
     from po_parser import parse_po_pdf
+    from quotation_parser import parse_quotation_input_file, get_default_quotation_data
     from generators.tax_invoice import generate_tax_invoice_excel
     from generators.challan import generate_challan_excel
     from generators.gc import generate_gc_docx
@@ -38,13 +50,26 @@ except ImportError:
         generate_challan_pdf,
         generate_gc_pdf
     )
+    from generators.quotation_pdf import (
+        generate_hind_quotation_pdf,
+        generate_yasha_quotation_pdf,
+        generate_madhu_quotation_pdf,
+        generate_quotation_bundle
+    )
+    from generators.quotation_excel import (
+        generate_hind_quotation_excel,
+        generate_yasha_quotation_excel,
+        generate_madhu_quotation_excel
+    )
     from db_manager import (
         get_all_records,
         get_record,
         save_record,
+        get_quotation_records,
+        save_quotation_record,
+        delete_record,
         update_crn_details
     )
-    from ireps_scraper import search_ireps_tenders, fetch_ireps_pdf
 
 app = FastAPI(title="IREPS Document Generation System", version="2.0.0")
 
@@ -57,51 +82,32 @@ app.add_middleware(
 )
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-ROOT_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
 TEMP_DIR = os.path.join(tempfile.gettempdir(), "ireps_docs")
 os.makedirs(TEMP_DIR, exist_ok=True)
 
-SAMPLE_PO_PATH = os.path.join(BASE_DIR, "sample", "55265692101304.pdf")
+SAMPLE_DIR = os.path.join(BASE_DIR, "sample")
+if os.path.exists(SAMPLE_DIR):
+    app.mount("/sample", StaticFiles(directory=SAMPLE_DIR), name="sample")
 
-@app.get("/api/ping")
-@app.get("/health")
-def ping_health():
-    import datetime
-    return {
-        "status": "ok",
-        "alive": True,
-        "service": "Hind Traders App",
-        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
-    }
+SAMPLE_PO_PATH = os.path.join(SAMPLE_DIR, "55265692101304.pdf")
 
 @app.get("/")
 def root():
-    root_index = os.path.join(ROOT_DIR, "index.html")
-    if os.path.exists(root_index):
-        return FileResponse(root_index)
     index_path = os.path.join(BASE_DIR, "client", "dist", "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
     return {
         "status": "ok",
         "service": "IREPS Document Generation System",
-        "version": "2.0.0"
+        "version": "2.0.0",
+        "documentation": "http://127.0.0.1:8000/docs",
+        "endpoints": {
+            "health": "/api/health",
+            "sample_data": "/api/sample-data",
+            "parse_po": "/api/parse-po",
+            "records": "/api/records"
+        }
     }
-
-@app.get("/catalog.html")
-def catalog_page():
-    catalog_path = os.path.join(ROOT_DIR, "catalog.html")
-    if os.path.exists(catalog_path):
-        return FileResponse(catalog_path)
-    raise HTTPException(status_code=404, detail="Catalog page not found")
-
-@app.get("/documents")
-@app.get("/documents.html")
-def documents_page():
-    index_path = os.path.join(BASE_DIR, "client", "dist", "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    raise HTTPException(status_code=404, detail="Documents page build not found")
 
 @app.get("/api/health")
 def health_check():
@@ -178,93 +184,6 @@ async def parse_po_endpoint(file: UploadFile = File(...)):
         return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to parse PO PDF: {str(e)}")
-
-@app.post("/api/fetch-po-by-number")
-def fetch_po_by_number(payload: Dict[str, Any] = Body(...)):
-    """
-    Downloads PO PDF directly from official IREPS URL pattern:
-    https://www.ireps.gov.in/ireps/etender/pdfdocs/MMIS/PO/<year>/02/<po-number>.pdf
-    and parses purchase order details into structured database record.
-    """
-    po_number = str(payload.get("po_number", "")).strip()
-    if not po_number:
-        raise HTTPException(status_code=400, detail="PO Number is required")
-
-    custom_year = str(payload.get("year", "")).strip()
-
-    candidate_years = []
-    if custom_year and custom_year.isdigit() and len(custom_year) == 4:
-        candidate_years.append(custom_year)
-
-    # Auto-detect year from PO number digits 3-4 if valid (e.g. 5526... -> 2026)
-    if len(po_number) >= 4 and po_number[2:4].isdigit():
-        yy = int(po_number[2:4])
-        if 20 <= yy <= 30:
-            detected_yr = f"20{yy:02d}"
-            if detected_yr not in candidate_years:
-                candidate_years.append(detected_yr)
-
-    # Standard fallback years
-    for y in ["2026", "2025", "2024", "2023", "2022"]:
-        if y not in candidate_years:
-            candidate_years.append(y)
-
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/pdf,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-    }
-
-    downloaded_pdf_path = None
-    fetched_url = ""
-    last_error = ""
-
-    for yr in candidate_years:
-        target_url = f"https://www.ireps.gov.in/ireps/etender/pdfdocs/MMIS/PO/{yr}/02/{po_number}.pdf"
-        try:
-            res = requests.get(target_url, headers=headers, timeout=12, verify=False)
-            if res.status_code == 200 and len(res.content) > 1000 and res.content.startswith(b'%PDF'):
-                temp_file = os.path.join(TEMP_DIR, f"{po_number}.pdf")
-                with open(temp_file, "wb") as f:
-                    f.write(res.content)
-                downloaded_pdf_path = temp_file
-                fetched_url = target_url
-                break
-            else:
-                last_error = f"HTTP {res.status_code} at {target_url}"
-        except Exception as err:
-            last_error = f"Error: {str(err)}"
-
-    if not downloaded_pdf_path or not os.path.exists(downloaded_pdf_path):
-        raise HTTPException(
-            status_code=404, 
-            detail=f"Could not download PO PDF from IREPS for PO #{po_number}. Attempted URL pattern: https://www.ireps.gov.in/ireps/etender/pdfdocs/MMIS/PO/<year>/02/{po_number}.pdf. Detail: {last_error}"
-        )
-
-    try:
-        data = parse_po_pdf(downloaded_pdf_path)
-        data["id"] = f"REC-{data['po_number']}"
-        data["fetched_url"] = fetched_url
-        save_record(data)
-        return data
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Downloaded PO from IREPS ({fetched_url}), but failed to parse PDF: {str(e)}")
-
-@app.get("/api/download-ireps-po")
-def download_ireps_po_direct(po_number: str, year: str = "2026"):
-    """Proxy endpoint to download original IREPS PO PDF file"""
-    target_url = f"https://www.ireps.gov.in/ireps/etender/pdfdocs/MMIS/PO/{year}/02/{po_number}.pdf"
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    try:
-        res = requests.get(target_url, headers=headers, timeout=15, verify=False)
-        if res.status_code == 200 and res.content.startswith(b'%PDF'):
-            temp_file = os.path.join(TEMP_DIR, f"IREPS_PO_{po_number}.pdf")
-            with open(temp_file, "wb") as f:
-                f.write(res.content)
-            return FileResponse(temp_file, filename=f"IREPS_PO_{po_number}.pdf", media_type="application/pdf")
-        else:
-            raise HTTPException(status_code=404, detail=f"PO PDF not found on IREPS at {target_url}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to download PO from IREPS: {str(e)}")
 
 # --- PDF GENERATION ENDPOINTS ---
 
@@ -371,42 +290,147 @@ def generate_gc_endpoint(data: Dict[str, Any] = Body(...)):
     generate_gc_docx(data, out_path)
     return FileResponse(out_path, filename=out_filename, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 
+# --- BUDGETARY QUOTATIONS ENDPOINTS ---
 
-# --- IREPS TENDER SEARCH & PROXY PDF ENDPOINTS ---
+@app.get("/api/quotations/records")
+def list_saved_quotations():
+    """Returns list of all saved budgetary quotation records"""
+    return get_quotation_records()
 
-@app.post("/api/ireps/search")
-def ireps_search_endpoint(payload: Dict[str, Any] = Body(...)):
-    """
-    Queries IREPS advanced search endpoint with parameters and returns parsed tender listings.
-    """
+@app.post("/api/quotations/records/save")
+def save_quotation_record_endpoint(data: Dict[str, Any] = Body(...)):
+    """Saves or updates a budgetary quotation record in persistent storage"""
+    saved = save_quotation_record(data)
+    return {"status": "success", "message": "Quotation record saved successfully", "record": saved}
+
+@app.get("/api/quotations/sample")
+def get_sample_quotation_data():
+    """Returns default sample budgetary quotation structure"""
+    default_data = get_default_quotation_data()
+    return {
+        "common": default_data,
+        "hind_traders": {
+            "quotation_ref": "HT/BQ/26-27",
+            "quotation_date": "03/08/2026",
+            "rates": { "1": "22", "2": "28", "3": "45", "4": "55", "5": "68", "6": "120", "7": "15", "8": "18", "9": "35", "10": "42" }
+        },
+        "yasha_enterprises": {
+            "quotation_ref": "YE/BQ/26-27",
+            "quotation_date": "04/08/2026",
+            "rates": { "1": "12", "2": "16", "3": "25", "4": "32", "5": "40", "6": "95", "7": "10", "8": "12", "9": "22", "10": "30" }
+        },
+        "madhu_enterprises": {
+            "quotation_ref": "ME/12/26-27",
+            "quotation_date": "06/05/2026",
+            "rates": { "1": "95", "2": "98", "3": "105", "4": "115", "5": "130", "6": "180", "7": "25", "8": "28", "9": "50", "10": "65" }
+        }
+    }
+
+@app.delete("/api/records/{record_id}")
+def delete_record_endpoint(record_id: str = Path(...)):
+    """Deletes a record (PO or Quotation) by ID"""
+    success = delete_record(record_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Record not found")
+    return {"status": "success", "message": "Record deleted successfully"}
+
+@app.post("/api/quotations/parse")
+async def parse_quotation_endpoint(file: UploadFile = File(...)):
+    """Uploads a PDF or photo of an enquiry/tender, parses details via Gemini AI."""
+    temp_path = os.path.join(TEMP_DIR, file.filename)
+    with open(temp_path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+
     try:
-        results = search_ireps_tenders(payload)
-        return results
+        data = parse_quotation_input_file(temp_path, file.content_type)
+        return data
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"IREPS Search failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to parse quotation document: {str(e)}")
 
-@app.get("/api/ireps/download-pdf")
-@app.get("/api/download-tender-pdf")
-def ireps_download_pdf_endpoint(url: str):
-    """
-    Proxy endpoint to download tender PDFs directly from IREPS bypassing CORS restrictions.
-    """
-    if not url:
-        raise HTTPException(status_code=400, detail="Missing required 'url' parameter")
+@app.post("/api/quotations/generate/hind")
+def generate_hind_quotation_endpoint(data: Dict[str, Any] = Body(...)):
+    """Generates Hind Traders Budgetary Quotation PDF"""
     try:
-        pdf_bytes = fetch_ireps_pdf(url)
-        filename = os.path.basename(url.split("?")[0])
-        if not filename.lower().endswith(".pdf"):
-            filename = "tender_document.pdf"
-        return Response(
-            content=pdf_bytes,
-            media_type="application/pdf",
-            headers={
-                "Content-Disposition": f"inline; filename={filename}"
-            }
-        )
+        ref_no = data.get("common", {}).get("ref_no", "HT").replace("/", "_").replace("\\", "_")
+        out_filename = f"Quotation_Hind_Traders_{ref_no}.pdf"
+        out_path = os.path.join(TEMP_DIR, out_filename)
+        generate_hind_quotation_pdf(data, out_path)
+        return FileResponse(out_path, filename=out_filename, media_type="application/pdf")
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Failed to fetch tender PDF from IREPS: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Hind Traders quotation generation error: {str(e)}")
+
+@app.post("/api/quotations/generate/hind-excel")
+def generate_hind_quotation_excel_endpoint(data: Dict[str, Any] = Body(...)):
+    """Generates Hind Traders Budgetary Quotation Excel"""
+    try:
+        ref_no = data.get("common", {}).get("ref_no", "HT").replace("/", "_").replace("\\", "_")
+        out_filename = f"Quotation_Hind_Traders_{ref_no}.xlsx"
+        out_path = os.path.join(TEMP_DIR, out_filename)
+        generate_hind_quotation_excel(data, out_path)
+        return FileResponse(out_path, filename=out_filename, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Hind Traders Excel error: {str(e)}")
+
+@app.post("/api/quotations/generate/yasha")
+def generate_yasha_quotation_endpoint(data: Dict[str, Any] = Body(...)):
+    """Generates Yasha Enterprises Budgetary Quotation PDF"""
+    try:
+        ref_no = data.get("common", {}).get("ref_no", "YE").replace("/", "_").replace("\\", "_")
+        out_filename = f"Quotation_Yasha_Enterprises_{ref_no}.pdf"
+        out_path = os.path.join(TEMP_DIR, out_filename)
+        generate_yasha_quotation_pdf(data, out_path)
+        return FileResponse(out_path, filename=out_filename, media_type="application/pdf")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Yasha Enterprises quotation generation error: {str(e)}")
+
+@app.post("/api/quotations/generate/yasha-excel")
+def generate_yasha_quotation_excel_endpoint(data: Dict[str, Any] = Body(...)):
+    """Generates Yasha Enterprises Budgetary Quotation Excel"""
+    try:
+        ref_no = data.get("common", {}).get("ref_no", "YE").replace("/", "_").replace("\\", "_")
+        out_filename = f"Quotation_Yasha_Enterprises_{ref_no}.xlsx"
+        out_path = os.path.join(TEMP_DIR, out_filename)
+        generate_yasha_quotation_excel(data, out_path)
+        return FileResponse(out_path, filename=out_filename, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Yasha Enterprises Excel error: {str(e)}")
+
+@app.post("/api/quotations/generate/madhu")
+def generate_madhu_quotation_endpoint(data: Dict[str, Any] = Body(...)):
+    """Generates Madhu Enterprises Budgetary Quotation PDF"""
+    try:
+        ref_no = data.get("common", {}).get("ref_no", "ME").replace("/", "_").replace("\\", "_")
+        out_filename = f"Quotation_Madhu_Enterprises_{ref_no}.pdf"
+        out_path = os.path.join(TEMP_DIR, out_filename)
+        generate_madhu_quotation_pdf(data, out_path)
+        return FileResponse(out_path, filename=out_filename, media_type="application/pdf")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Madhu Enterprises quotation generation error: {str(e)}")
+
+@app.post("/api/quotations/generate/madhu-excel")
+def generate_madhu_quotation_excel_endpoint(data: Dict[str, Any] = Body(...)):
+    """Generates Madhu Enterprises Budgetary Quotation Excel"""
+    try:
+        ref_no = data.get("common", {}).get("ref_no", "ME").replace("/", "_").replace("\\", "_")
+        out_filename = f"Quotation_Madhu_Enterprises_{ref_no}.xlsx"
+        out_path = os.path.join(TEMP_DIR, out_filename)
+        generate_madhu_quotation_excel(data, out_path)
+        return FileResponse(out_path, filename=out_filename, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Madhu Enterprises Excel error: {str(e)}")
+
+@app.post("/api/quotations/generate/bundle")
+def generate_quotation_bundle_endpoint(data: Dict[str, Any] = Body(...)):
+    """Generates ZIP bundle containing PDFs for all 3 organization quotations"""
+    try:
+        ref_no = data.get("common", {}).get("ref_no", "ALL").replace("/", "_").replace("\\", "_")
+        zip_filename = f"Quotations_Bundle_{ref_no}.zip"
+        zip_path = os.path.join(TEMP_DIR, zip_filename)
+        generate_quotation_bundle(data, zip_path)
+        return FileResponse(zip_path, filename=zip_filename, media_type="application/zip")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Quotation bundle error: {str(e)}")
+
 
 
 # --- SERVE FRONTEND STATIC FILES & SPA FALLBACK ---

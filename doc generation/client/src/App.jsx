@@ -1,44 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
-import PasswordGate from './components/PasswordGate';
 import PoUploader from './components/PoUploader';
 import DataEditor from './components/DataEditor';
 import SavedRecordsManager from './components/SavedRecordsManager';
-import IrepsSearch from './components/IrepsSearch';
+import QuotationGenerator from './components/QuotationGenerator';
 import TaxInvoicePreview from './components/previews/TaxInvoicePreview';
 import ChallanPreview from './components/previews/ChallanPreview';
 import GcPreview from './components/previews/GcPreview';
 import { FileText, Truck, ShieldCheck, Download, Printer, CheckCircle, FileCode } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_BASE 
-  || (window.location.port === '5173' || window.location.port === '3000' 
-        ? 'http://127.0.0.1:8000/api' 
-        : '/api');
+const API_BASE = 'http://127.0.0.1:8000/api';
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [activeMode, setActiveMode] = useState('quotations'); // 'quotations' | 'po'
   const [poData, setPoData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('tax-invoice'); // 'tax-invoice' | 'challan' | 'gc'
-  const [activeView, setActiveView] = useState('generator'); // 'generator' | 'ireps'
   const [statusMsg, setStatusMsg] = useState('');
 
   useEffect(() => {
-    // Check if session is already authenticated
-    const authStatus = sessionStorage.getItem('ht_doc_auth');
-    if (authStatus === 'true') {
-      setIsAuthenticated(true);
-    }
+    // Start empty on app load as requested
   }, []);
-
-  const handleUnlock = () => {
-    setIsAuthenticated(true);
-  };
-
-  const handleLock = () => {
-    sessionStorage.removeItem('ht_doc_auth');
-    setIsAuthenticated(false);
-  };
 
   const loadSampleData = async () => {
     setIsLoading(true);
@@ -175,39 +157,6 @@ export default function App() {
     }
   };
 
-  const handleFetchPoByNumber = async (poNumber, year) => {
-    setIsLoading(true);
-    setStatusMsg(`Downloading PO #${poNumber} directly from IREPS (${year})...`);
-    try {
-      const res = await fetch(`${API_BASE}/fetch-po-by-number`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ po_number: poNumber, year: year })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (!data.invoice_no) data.invoice_no = '42';
-        if (!data.invoice_date) data.invoice_date = new Date().toLocaleDateString('en-GB');
-        if (!data.challan_no) data.challan_no = data.invoice_no;
-        if (!data.challan_date) data.challan_date = new Date().toLocaleDateString('en-GB');
-        if (!data.gc_file_no) data.gc_file_no = 'HT/GC-WC/26-27';
-        if (!data.gc_date) data.gc_date = new Date().toLocaleDateString('en-GB');
-        if (!data.crn_no) data.crn_no = '';
-        if (!data.crn_date) data.crn_date = '';
-
-        setPoData(data);
-        setStatusMsg(`Successfully extracted PO #${poNumber} directly from IREPS!`);
-      } else {
-        const errJson = await res.json();
-        alert(`IREPS Fetch Error: ${errJson.detail}`);
-      }
-    } catch (err) {
-      alert(`Network error fetching PO from IREPS: ${err.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const downloadBackendFile = async (endpoint, defaultFilename) => {
     if (!poData) return;
     try {
@@ -237,58 +186,65 @@ export default function App() {
     await downloadBackendFile('bundle-pdf', `Documents_Bundle_PO_${poData.po_number}.zip`);
   };
 
+  const exportQuotationBundle = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/quotations/sample`);
+      const sample = res.ok ? await res.json() : null;
+      const payload = sample || {
+        common: { ref_no: 'F/DPS/MMC(D)/27' }
+      };
+      const resBundle = await fetch(`${API_BASE}/quotations/generate/bundle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (resBundle.ok) {
+        const blob = await resBundle.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Quotations_Bundle.zip`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      alert(`Quotation bundle error: ${err.message}`);
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
-
-  if (!isAuthenticated) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <Navbar
-          onLoadSample={() => {}}
-          onExportAll={() => {}}
-          onPrintCurrent={() => {}}
-          hasPo={false}
-          onLock={handleLock}
-        />
-        <PasswordGate onUnlock={handleUnlock} />
-      </div>
-    );
-  }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar
         onLoadSample={loadSampleData}
         onExportAll={exportAllPdfBundle}
+        onExportQuotationBundle={exportQuotationBundle}
         onPrintCurrent={handlePrint}
         hasPo={!!poData}
-        onLock={handleLock}
-        activeView={activeView}
-        onToggleView={setActiveView}
+        activeMode={activeMode}
+        onModeChange={setActiveMode}
       />
 
-      {statusMsg && (
-        <div className="no-print" style={{ background: '#141414', borderBottom: '1px solid var(--border-color)', padding: '0.4rem 1.5rem', fontSize: '0.8rem', color: 'var(--gold)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+      {statusMsg && activeMode === 'po' && (
+        <div className="no-print" style={{ background: '#1e293b', borderBottom: '1px solid #334155', padding: '0.4rem 1.5rem', fontSize: '0.8rem', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
           <CheckCircle size={14} /> {statusMsg}
         </div>
       )}
 
-      {activeView === 'ireps' ? (
-        <div style={{ padding: '1.5rem', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
-          <IrepsSearch apiBase={API_BASE} />
-        </div>
+      {activeMode === 'quotations' ? (
+        <QuotationGenerator poData={poData} />
       ) : (
-        <main className="dashboard-grid">
-          {/* LEFT COLUMN: Controls, Editor & Saved Archive */}
-          <div className="no-print">
 
+        <main className="dashboard-grid">
+        {/* LEFT COLUMN: Controls, Editor & Saved Archive */}
+        <div className="no-print">
           <PoUploader
             onFileUpload={handleFileUpload}
-            onFetchPoByNumber={handleFetchPoByNumber}
             isLoading={isLoading}
             currentPoNo={poData?.po_number}
-            apiBase={API_BASE}
           />
 
           {poData && (
@@ -312,14 +268,14 @@ export default function App() {
         <div>
           {!poData ? (
             <div className="glass-card" style={{ padding: '3rem 1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '380px' }}>
-              <div style={{ background: 'rgba(212, 175, 55, 0.1)', width: '64px', height: '64px', borderRadius: '50%', border: '1px solid var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
-                <FileText size={32} color="var(--gold)" />
+              <div style={{ background: 'rgba(59, 130, 246, 0.15)', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
+                <FileText size={32} color="#3b82f6" />
               </div>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '0.5rem', fontFamily: "'Playfair Display', serif", color: '#fff' }}>
-                Railway Document Automation Studio
+              <h2 style={{ fontSize: '1.3rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+                No Purchase Order Loaded
               </h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', maxWidth: '460px', margin: '0 auto 1.5rem auto', lineHeight: 1.6 }}>
-                Upload an official IREPS Purchase Order PDF file using the left panel, or click <strong>Load Sample PO</strong> in the top header to preview and generate Tax Invoice, Delivery Challan & Guarantee Certificate.
+              <p style={{ color: '#94a3b8', fontSize: '0.875rem', maxWidth: '460px', margin: '0 auto 1.5rem auto', lineHeight: 1.5 }}>
+                Upload an official IREPS Purchase Order PDF file using the left panel, or click <strong>Load Sample PO</strong> in the top header to preview and edit documents.
               </p>
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                 <button className="btn btn-primary" onClick={loadSampleData}>
@@ -407,4 +363,3 @@ export default function App() {
     </div>
   );
 }
-

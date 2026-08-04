@@ -236,39 +236,11 @@ def extract_items(text: str) -> List[Dict[str, Any]]:
         pl_match = re.search(r'PL\s*No\s*:\s*(\w+)', block)
         pl_no = pl_match.group(1) if pl_match else ""
 
-        qty_match = re.search(r'(?:Item\s*Qty|Quantity|Qty)\s*:\s*([\d.]+)\s*([A-Za-z]+)', block, re.IGNORECASE)
+        qty_match = re.search(r'Item\s*Qty\s*:\s*([\d.]+)\s*([A-Za-z]+)', block, re.IGNORECASE)
         qty_num = float(qty_match.group(1)) if qty_match else 1.0
-        raw_unit = qty_match.group(2).strip() if qty_match else "Nos"
+        qty_unit = qty_match.group(2) if qty_match else "Nos"
         
-        # Normalize common Railway PO unit strings
-        unit_lower = raw_unit.lower()
-        if unit_lower in ['nos', 'no', 'number', 'numbers']:
-            qty_unit = "Nos"
-        elif unit_lower in ['set', 'sets']:
-            qty_unit = "Set"
-        elif unit_lower in ['kg', 'kgs', 'kilogram', 'kilograms']:
-            qty_unit = "Kg"
-        elif unit_lower in ['mtr', 'm', 'meter', 'meters', 'metre', 'metres']:
-            qty_unit = "Mtr"
-        elif unit_lower in ['sqft', 'sq.ft', 'sq ft']:
-            qty_unit = "SqFt"
-        elif unit_lower in ['pair', 'pairs']:
-            qty_unit = "Pair"
-        elif unit_lower in ['pkt', 'pkts', 'packet', 'packets']:
-            qty_unit = "Pkt"
-        elif unit_lower in ['ltr', 'ltrs', 'litre', 'litres']:
-            qty_unit = "Ltr"
-        elif unit_lower in ['box', 'boxes']:
-            qty_unit = "Box"
-        elif unit_lower in ['dozen', 'doz']:
-            qty_unit = "Dozen"
-        elif unit_lower in ['mt', 'metric ton']:
-            qty_unit = "MT"
-        else:
-            qty_unit = raw_unit.capitalize()
-
-        display_qty = int(qty_num) if qty_num.is_integer() else qty_num
-        qty_str = f"{display_qty} {qty_unit}"
+        qty_str = f"{int(qty_num) if qty_num.is_integer() else qty_num} {qty_unit.capitalize()}"
 
         rate_match = re.search(r'Basic\s*Rate:\s*Rs\.\s*([\d.]+)', block, re.IGNORECASE)
         rate = float(rate_match.group(1)) if rate_match else 0.0
@@ -291,9 +263,9 @@ def extract_items(text: str) -> List[Dict[str, Any]]:
             "pl_no": pl_no,
             "description": clean_desc,
             "hsn": hsn,
-            "quantity": display_qty,
-            "unit": qty_unit,
-            "quantity_display": qty_str,
+            "quantity": int(qty_num) if qty_num.is_integer() else qty_num,
+            "unit": qty_unit.capitalize(),
+            "quantity_display": f"{int(qty_num) if qty_num.is_integer() else qty_num}{qty_unit.capitalize()}" if qty_unit.lower() == 'nos' else qty_str,
             "rate": rate,
             "total_amount": amount,
             "gst_percent": gst_percent
