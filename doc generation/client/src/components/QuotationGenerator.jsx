@@ -4,7 +4,17 @@ import HindQuotationPreview from './previews/HindQuotationPreview';
 import YashaQuotationPreview from './previews/YashaQuotationPreview';
 import MadhuQuotationPreview from './previews/MadhuQuotationPreview';
 
-const API_BASE = 'http://127.0.0.1:8000/api';
+const getApiBase = () => {
+  if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    if (window.location.port !== '8000' && window.location.port !== '') {
+      return 'http://127.0.0.1:8000/api';
+    }
+  }
+  return '/api';
+};
+
+const API_BASE = getApiBase();
 
 export default function QuotationGenerator({ poData }) {
   const [isParsing, setIsParsing] = useState(false);

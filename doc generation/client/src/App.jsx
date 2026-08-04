@@ -9,7 +9,17 @@ import ChallanPreview from './components/previews/ChallanPreview';
 import GcPreview from './components/previews/GcPreview';
 import { FileText, Truck, ShieldCheck, Download, Printer, CheckCircle, FileCode } from 'lucide-react';
 
-const API_BASE = 'http://127.0.0.1:8000/api';
+const getApiBase = () => {
+  if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    if (window.location.port !== '8000' && window.location.port !== '') {
+      return 'http://127.0.0.1:8000/api';
+    }
+  }
+  return '/api';
+};
+
+const API_BASE = getApiBase();
 
 export default function App() {
   const [activeMode, setActiveMode] = useState('quotations'); // 'quotations' | 'po'
