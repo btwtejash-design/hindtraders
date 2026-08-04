@@ -135,10 +135,15 @@ export default function MadhuQuotationPreview({ data }) {
             <img
               src="/sample/madhu-stamp.jpg"
               alt="Madhu Enterprises Stamp"
-              style={{ maxHeight: '95px', objectFit: 'contain' }}
+              style={{ maxWidth: '180px', height: 'auto', display: 'inline-block' }}
+              onLoad={(e) => {
+                const next = e.target.nextElementSibling;
+                if (next) next.style.display = 'none';
+              }}
               onError={(e) => {
-                e.target.onerror = null;
                 e.target.style.display = 'none';
+                const next = e.target.nextElementSibling;
+                if (next) next.style.display = 'block';
               }}
             />
             <div className="fallback-stamp" style={{ fontWeight: 'bold', fontSize: '0.85rem', color: '#1565c0' }}>

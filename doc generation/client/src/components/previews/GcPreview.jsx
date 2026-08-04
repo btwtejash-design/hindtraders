@@ -91,10 +91,15 @@ export default function GcPreview({ poData }) {
             <img
               src="/sample/hind-stamp.jpg"
               alt="Hind Traders Stamp"
-              style={{ maxHeight: '80px', objectFit: 'contain' }}
+              style={{ maxWidth: '180px', height: 'auto', display: 'inline-block' }}
+              onLoad={(e) => {
+                const next = e.target.nextElementSibling;
+                if (next) next.style.display = 'none';
+              }}
               onError={(e) => {
-                e.target.onerror = null;
                 e.target.style.display = 'none';
+                const next = e.target.nextElementSibling;
+                if (next) next.style.display = 'block';
               }}
             />
             <div style={{ fontWeight: 'bold', fontSize: '9pt' }}>

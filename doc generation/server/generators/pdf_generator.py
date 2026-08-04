@@ -157,8 +157,8 @@ def generate_tax_invoice_pdf(data: Dict[str, Any], output_path: str) -> str:
                     <th style="width: 50%;">Description</th>
                     <th style="width: 10%;">HSN</th>
                     <th style="width: 10%;">Quantity (Nos)</th>
-                    <th style="width: 12%;">Rate/ Unit (&#8377;)</th>
-                    <th style="width: 12%;">Total (&#8377;)</th>
+                    <th style="width: 12%;">Rate/ Unit (Rs.)</th>
+                    <th style="width: 12%;">Total (Rs.)</th>
                 </tr>
             </thead>
             <tbody>
@@ -172,19 +172,19 @@ def generate_tax_invoice_pdf(data: Dict[str, Any], output_path: str) -> str:
                     <b>Grand Total in Words:</b> {words_total}
                 </td>
                 <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">Taxable Amount:</td>
-                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">&#8377; {taxable_sum:.2f}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">Rs. {taxable_sum:.2f}</td>
             </tr>
             <tr>
                 <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">SGST: {int(sgst_rate)}%</td>
-                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">&#8377; {sgst_amount:.2f}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">Rs. {sgst_amount:.2f}</td>
             </tr>
             <tr>
                 <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">CGST: {int(cgst_rate)}%</td>
-                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">&#8377; {cgst_amount:.2f}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">Rs. {cgst_amount:.2f}</td>
             </tr>
             <tr>
                 <td style="border: 1px solid #000; padding: 4px; font-weight: bold;">Grand Total:</td>
-                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">&#8377; {grand_total:.2f}</td>
+                <td style="border: 1px solid #000; padding: 4px; text-align: right; font-weight: bold;">Rs. {grand_total:.2f}</td>
             </tr>
         </table>
 
@@ -487,7 +487,7 @@ def generate_gc_pdf(data: Dict[str, Any], output_path: str) -> str:
                         The warranty/guarantee shall remain valid as per the IRS terms and conditions.
                     </td>
                     <td style="width: 40%; text-align: right; vertical-align: bottom;">
-                        {"<img src='" + stamp_img + "' style='height: 65px;' /><br/>" if stamp_img else ""}
+                        {"<img src='" + stamp_img + "' style='max-width: 180px;' /><br/>" if stamp_img else ""}
                         <b style="font-size: 9pt;">HIND TRADERS<br/>Proprietor</b>
                     </td>
                 </tr>

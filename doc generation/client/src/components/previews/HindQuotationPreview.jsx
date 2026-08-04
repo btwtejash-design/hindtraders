@@ -115,7 +115,7 @@ export default function HindQuotationPreview({ data }) {
                   <td style={{ border: '1px solid #000', padding: '6px 10px', fontWeight: 'bold' }}>{item.description}</td>
                   <td style={{ border: '1px solid #000', textAlign: 'center', fontWeight: 'bold' }}>{qtyDisplay}</td>
                   <td style={{ border: '1px solid #000', textAlign: 'center', fontWeight: 'bold' }}>
-                    {rateVal ? `₹${rateVal}` : '₹0'}
+                    {rateVal ? `Rs. ${rateVal}` : 'Rs. 0'}
                   </td>
                 </tr>
               );
@@ -139,10 +139,15 @@ export default function HindQuotationPreview({ data }) {
             <img
               src="/sample/hind-stamp.jpg"
               alt="Hind Traders Stamp"
-              style={{ maxHeight: '90px', objectFit: 'contain' }}
+              style={{ maxWidth: '180px', height: 'auto', display: 'inline-block' }}
+              onLoad={(e) => {
+                const next = e.target.nextElementSibling;
+                if (next) next.style.display = 'none';
+              }}
               onError={(e) => {
-                e.target.onerror = null;
                 e.target.style.display = 'none';
+                const next = e.target.nextElementSibling;
+                if (next) next.style.display = 'block';
               }}
             />
             <div className="fallback-stamp" style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>

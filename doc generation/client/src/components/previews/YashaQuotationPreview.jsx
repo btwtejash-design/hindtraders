@@ -13,7 +13,7 @@ export default function YashaQuotationPreview({ data }) {
       background: '#fff',
       color: '#000',
       padding: '2rem 2.5rem',
-      fontFamily: 'Helvetica, Arial, sans-serif',
+      fontFamily: "'Trebuchet MS', 'Segoe UI', 'Calibri', sans-serif",
       fontSize: '0.95rem',
       lineHeight: 1.3,
       minHeight: '297mm',
@@ -143,10 +143,15 @@ export default function YashaQuotationPreview({ data }) {
             <img
               src="/sample/yasha-stamp.jpg"
               alt="Yasha Enterprises Stamp"
-              style={{ maxHeight: '90px', objectFit: 'contain' }}
+              style={{ maxWidth: '180px', height: 'auto', display: 'inline-block' }}
+              onLoad={(e) => {
+                const next = e.target.nextElementSibling;
+                if (next) next.style.display = 'none';
+              }}
               onError={(e) => {
-                e.target.onerror = null;
                 e.target.style.display = 'none';
+                const next = e.target.nextElementSibling;
+                if (next) next.style.display = 'block';
               }}
             />
             <div className="fallback-stamp" style={{ fontWeight: 'bold', fontSize: '0.85rem', color: '#1e3a8a' }}>

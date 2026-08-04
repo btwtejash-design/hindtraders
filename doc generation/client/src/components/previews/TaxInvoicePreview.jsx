@@ -115,8 +115,8 @@ export default function TaxInvoicePreview({ poData }) {
             <th style={{ border: '1px solid #000', padding: '5px', width: '50%' }}>Description</th>
             <th style={{ border: '1px solid #000', padding: '5px', width: '10%' }}>HSN</th>
             <th style={{ border: '1px solid #000', padding: '5px', width: '10%' }}>Quantity (Nos)</th>
-            <th style={{ border: '1px solid #000', padding: '5px', width: '12%' }}>Rate/ Unit (₹)</th>
-            <th style={{ border: '1px solid #000', padding: '5px', width: '12%' }}>Total (₹)</th>
+            <th style={{ border: '1px solid #000', padding: '5px', width: '12%' }}>Rate/ Unit (Rs.)</th>
+            <th style={{ border: '1px solid #000', padding: '5px', width: '12%' }}>Total (Rs.)</th>
           </tr>
         </thead>
         <tbody>
@@ -128,8 +128,8 @@ export default function TaxInvoicePreview({ poData }) {
                 <td style={{ border: '1px solid #000', padding: '5px' }}>{item.description}</td>
                 <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>{item.hsn}</td>
                 <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'center' }}>{item.quantity}</td>
-                <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'right' }}>₹ {parseFloat(item.rate).toFixed(2)}</td>
-                <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'right' }}>₹ {rowTot.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'right' }}>Rs. {parseFloat(item.rate).toFixed(2)}</td>
+                <td style={{ border: '1px solid #000', padding: '5px', textAlign: 'right' }}>Rs. {rowTot.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
               </tr>
             );
           })}
@@ -144,19 +144,19 @@ export default function TaxInvoicePreview({ poData }) {
               <strong>Grand Total in Words:</strong> {wordsTotal}
             </td>
             <td style={{ border: '1px solid #000', padding: '4px 8px', fontWeight: 'bold' }}>Taxable Amount:</td>
-            <td style={{ border: '1px solid #000', padding: '4px 8px', textAlign: 'right', fontWeight: 'bold' }}>₹ {taxableSum.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+            <td style={{ border: '1px solid #000', padding: '4px 8px', textAlign: 'right', fontWeight: 'bold' }}>Rs. {taxableSum.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
           </tr>
           <tr>
             <td style={{ border: '1px solid #000', padding: '4px 8px', fontWeight: 'bold' }}>SGST: {sgstRate}%</td>
-            <td style={{ border: '1px solid #000', padding: '4px 8px', textAlign: 'right', fontWeight: 'bold' }}>₹ {sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+            <td style={{ border: '1px solid #000', padding: '4px 8px', textAlign: 'right', fontWeight: 'bold' }}>Rs. {sgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
           </tr>
           <tr>
             <td style={{ border: '1px solid #000', padding: '4px 8px', fontWeight: 'bold' }}>CGST: {cgstRate}%</td>
-            <td style={{ border: '1px solid #000', padding: '4px 8px', textAlign: 'right', fontWeight: 'bold' }}>₹ {cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+            <td style={{ border: '1px solid #000', padding: '4px 8px', textAlign: 'right', fontWeight: 'bold' }}>Rs. {cgstAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
           </tr>
           <tr>
             <td style={{ border: '1px solid #000', padding: '4px 8px', fontWeight: 'bold' }}>Grand Total:</td>
-            <td style={{ border: '1px solid #000', padding: '4px 8px', textAlign: 'right', fontWeight: 'bold' }}>₹ {grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+            <td style={{ border: '1px solid #000', padding: '4px 8px', textAlign: 'right', fontWeight: 'bold' }}>Rs. {grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
           </tr>
         </tbody>
       </table>

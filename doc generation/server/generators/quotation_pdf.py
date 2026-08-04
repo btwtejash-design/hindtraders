@@ -54,7 +54,7 @@ def generate_hind_quotation_pdf(data: Dict[str, Any], output_path: str) -> str:
         qty_str = f"{qty_num_str} {unit}"
         
         rate_val = rates.get(str(sr)) or rates.get(sr) or 0
-        rate_display = f"&#8377;{rate_val}" if rate_val else "&#8377;0"
+        rate_display = f"Rs. {rate_val}" if rate_val else "Rs. 0"
 
         items_html += f"""
         <tr style="height: 38px;">
@@ -193,7 +193,7 @@ def generate_hind_quotation_pdf(data: Dict[str, Any], output_path: str) -> str:
                         4. Material guaranteed as per IRS terms & conditions
                     </td>
                     <td style="width: 40%; text-align: right; vertical-align: bottom;">
-                        {"<img src='" + stamp_img + "' style='height: 70px;' />" if stamp_img else "<b>HIND TRADERS<br/>Proprietor</b>"}
+                        {"<img src='" + stamp_img + "' style='max-width: 180px;' />" if stamp_img else "<b>HIND TRADERS<br/>Proprietor</b>"}
                     </td>
                 </tr>
             </table>
@@ -268,7 +268,7 @@ def generate_yasha_quotation_pdf(data: Dict[str, Any], output_path: str) -> str:
                 }}
             }}
             body {{
-                font-family: Helvetica, Arial, sans-serif;
+                font-family: Courier, 'Courier New', sans-serif;
                 font-size: 9.5pt;
                 line-height: 1.3;
                 color: #000;
@@ -361,7 +361,7 @@ def generate_yasha_quotation_pdf(data: Dict[str, Any], output_path: str) -> str:
                         (6) As per IRS terms & conditions
                     </td>
                     <td style="width: 40%; text-align: right; vertical-align: bottom;">
-                        {"<img src='" + stamp_img + "' style='height: 70px;' />" if stamp_img else "<b>YASHA ENTERPRISES<br/>Proprietor</b>"}
+                        {"<img src='" + stamp_img + "' style='max-width: 180px;' />" if stamp_img else "<b>YASHA ENTERPRISES<br/>Proprietor</b>"}
                     </td>
                 </tr>
             </table>
@@ -401,7 +401,7 @@ def generate_madhu_quotation_pdf(data: Dict[str, Any], output_path: str) -> str:
         qty_str = f"{qty_num_str} {unit}"
 
         rate_val = rates.get(str(sr)) or rates.get(sr) or 0
-        rate_display = f"&#8377;{rate_val}" if rate_val else "&#8377;0"
+        rate_display = f"Rs. {rate_val}" if rate_val else "Rs. 0"
 
         items_html += f"""
         <tr style="height: 38px;">
@@ -537,7 +537,7 @@ def generate_madhu_quotation_pdf(data: Dict[str, Any], output_path: str) -> str:
                         <div style="font-family: 'Brush Script MT', cursive, Georgia, serif; font-size: 16pt; color: #1565c0; font-weight: bold; margin-bottom: 2px;">
                             Yours Sincerely
                         </div>
-                        {"<img src='" + stamp_img + "' style='height: 75px;' />" if stamp_img else "<b style='color:#1565c0;'>MADHU ENTERPRISES</b>"}
+                        {"<img src='" + stamp_img + "' style='max-width: 180px;' />" if stamp_img else "<b style='color:#1565c0;'>MADHU ENTERPRISES</b>"}
                     </td>
                 </tr>
             </table>
