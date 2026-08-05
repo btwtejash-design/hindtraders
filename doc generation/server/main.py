@@ -103,6 +103,15 @@ SAMPLE_PO_PATH = os.path.join(SAMPLE_DIR, "55265692101304.pdf")
 def health_check():
     return {"status": "ok", "message": "IREPS Document Generation Service Running v2.0"}
 
+@app.post("/api/verify-password")
+def verify_password(payload: Dict[str, str] = Body(...)):
+    """Verifies the password for accessing the Document Generation portal against DOC_PASS environment variable"""
+    submitted_pass = payload.get("password", "")
+    expected_pass = os.environ.get("DOC_PASS", "ht@12345")
+    if submitted_pass and submitted_pass == expected_pass:
+        return {"status": "success", "authenticated": True}
+    raise HTTPException(status_code=401, detail="Invalid password. Access denied.")
+
 # --- DATABASE RECORD ENDPOINTS ---
 
 @app.get("/api/records")

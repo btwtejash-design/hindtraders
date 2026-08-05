@@ -4,6 +4,7 @@ import PoUploader from './components/PoUploader';
 import DataEditor from './components/DataEditor';
 import SavedRecordsManager from './components/SavedRecordsManager';
 import QuotationGenerator from './components/QuotationGenerator';
+import PasswordLock from './components/PasswordLock';
 import TaxInvoicePreview from './components/previews/TaxInvoicePreview';
 import ChallanPreview from './components/previews/ChallanPreview';
 import GcPreview from './components/previews/GcPreview';
@@ -22,6 +23,9 @@ const getApiBase = () => {
 const API_BASE = getApiBase();
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return sessionStorage.getItem('doc_access_granted') === 'true';
+  });
   const [activeMode, setActiveMode] = useState('quotations'); // 'quotations' | 'po'
   const [poData, setPoData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -226,6 +230,15 @@ export default function App() {
     window.print();
   };
 
+  if (!isAuthenticated) {
+    return (
+      <PasswordLock
+        apiBase={API_BASE}
+        onSuccess={() => setIsAuthenticated(true)}
+      />
+    );
+  }
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar
@@ -236,6 +249,10 @@ export default function App() {
         hasPo={!!poData}
         activeMode={activeMode}
         onModeChange={setActiveMode}
+        onLock={() => {
+          sessionStorage.removeItem('doc_access_granted');
+          setIsAuthenticated(false);
+        }}
       />
 
       {statusMsg && activeMode === 'po' && (

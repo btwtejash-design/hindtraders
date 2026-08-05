@@ -16,3 +16,5 @@ services:
         value: "doc generation/server:doc generation"
       - key: GEMINI_API_KEY
         sync: false
+      - key: DOC_PASS
+        value: ht@12345

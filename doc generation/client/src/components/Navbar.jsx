@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Sparkles, Download, Printer, FileSpreadsheet, Globe } from 'lucide-react';
+import { FileText, Sparkles, Download, Printer, FileSpreadsheet, Globe, Lock } from 'lucide-react';
 
 export default function Navbar({
   onLoadSample,
@@ -9,7 +9,8 @@ export default function Navbar({
   onPrintCurrent,
   hasPo,
   activeMode,
-  onModeChange
+  onModeChange,
+  onLock
 }) {
   return (
     <header className="app-header no-print">
@@ -83,6 +84,17 @@ export default function Navbar({
         >
           <Globe size={14} /> Official Website
         </a>
+
+        {onLock && (
+          <button
+            className="btn btn-outline"
+            onClick={onLock}
+            style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+            title="Lock Documents Portal"
+          >
+            <Lock size={14} /> Lock Portal
+          </button>
+        )}
 
         {activeMode === 'po' ? (
           <>
