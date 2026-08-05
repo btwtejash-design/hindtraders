@@ -249,13 +249,22 @@ export default function QuotationGenerator({ poData }) {
         const parsedItems = parsed.items || [];
 
         setCommonData({
-          ref_no: parsed.ref_no || 'F/DPS/MMC(D)/27',
+          ref_no: parsed.ref_no || '',
           ref_date: parsed.ref_date || new Date().toLocaleDateString('en-GB'),
-          consignee_address: parsed.consignee_address || 'AWM (WHEEL)\nEASTERN RLY, JAMALPUR',
+          consignee_address: parsed.consignee_address || '',
           items: parsedItems
         });
 
-        handleAutoSetLowestOrg(lowestOrgKey, parsedItems);
+        // Ensure default document reference numbers for all orgs remain pre-filled
+        setHindData(prev => ({ ...prev, quotation_ref: prev.quotation_ref || 'HT/BQ/26-27', quotation_date: prev.quotation_date || '03/08/2026' }));
+        setYashaData(prev => ({ ...prev, quotation_ref: prev.quotation_ref || 'YE/BQ/26-27', quotation_date: prev.quotation_date || '04/08/2026' }));
+        setMadhuData(prev => ({ ...prev, quotation_ref: prev.quotation_ref || 'ME/12/26-27', quotation_date: prev.quotation_date || '06/05/2026' }));
+        setLovelyData(prev => ({ ...prev, quotation_ref: prev.quotation_ref || 'LV/23/26-27', quotation_date: prev.quotation_date || '29/04/2026' }));
+        setRajuData(prev => ({ ...prev, quotation_ref: prev.quotation_ref || 'REW/BQ/26-27', quotation_date: prev.quotation_date || '02/06/2026' }));
+
+        if (parsedItems.length > 0) {
+          handleAutoSetLowestOrg(lowestOrgKey, parsedItems);
+        }
         setStatusMsg(`Successfully extracted ${parsedItems.length} items from ${file.name}! L1 rates auto-configured.`);
       } else {
         const errJson = await res.json();
