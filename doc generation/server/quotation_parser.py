@@ -29,23 +29,26 @@ def normalize_text(text: str) -> str:
 
 def parse_quotation_input_file(file_path: str, mime_type: str = None) -> Dict[str, Any]:
     """
-    Parses an uploaded PDF or image file containing a tender, enquiry, or document,
-    using Gemini AI if configured, with an enhanced local PDF text parser fallback.
+    Parses an uploaded PDF or image file containing a tender, enquiry, or document.
+    Runs local text extraction on PDFs first for fast & accurate parsing,
+    and falls back to Gemini AI if local extraction returns no items or for images.
     """
-    # 1. Try Gemini AI
+    # 1. Local extraction for PDFs (fast & 100% offline reliable)
+    if file_path.lower().endswith(".pdf"):
+        local_data = parse_quotation_local_pdf(file_path)
+        if local_data and len(local_data.get("items", [])) > 0:
+            logger.info(f"Successfully extracted {len(local_data['items'])} quotation items using local PDF parser")
+            return local_data
+
+    # 2. Gemini AI extraction (for images or complex PDFs)
     if GEMINI_API_KEY:
         ai_data = parse_quotation_with_gemini(file_path, mime_type)
         if ai_data and len(ai_data.get('items', [])) > 0:
             logger.info(f"Successfully extracted {len(ai_data.get('items', []))} quotation items using Gemini API")
             return ai_data
 
-    # 2. Local Fallback for PDFs
-    if file_path.lower().endswith(".pdf"):
-        logger.info("Using enhanced local PDF parser for quotation data")
-        return parse_quotation_local_pdf(file_path)
-
-    # 3. Fallback for image files if AI key is missing or fails
-    logger.info("Fallback empty quotation structure")
+    # 3. Fallback empty structure
+    logger.info("Using default quotation structure")
     return get_default_quotation_data()
 
 def parse_quotation_with_gemini(file_path: str, mime_type: str = None) -> Dict[str, Any]:
@@ -107,7 +110,7 @@ JSON Schema:
 CRITICAL RULES:
 1. Extract ONLY actual material items / particulars listed in the item table.
 2. DO NOT include footer terms & conditions (e.g., "(1) GST@18% Extra", "(2) For Destination", "(3) Delivery within 30 days", "(4) Inspection", "(5) Payment 100%"). Those are terms, NOT material particulars!
-3. If the table lists 10 material items, extract ALL 10 items accurately without truncating or omitting any row.
+3. If the document lists 10 material items, extract ALL 10 items accurately without truncating or omitting any row.
 4. Clean the "description" field so it contains only the actual item specification.
 5. "unit" should be extracted (e.g., mtr, Nos, Set, Kg, Pc, NO). Default to "Nos" if missing.
 6. "quantity" should be numeric. Default to 1 if missing.
@@ -154,99 +157,94 @@ CRITICAL RULES:
 def parse_quotation_local_pdf(file_path: str) -> Dict[str, Any]:
     try:
         reader = pypdf.PdfReader(file_path)
-        text = normalize_text("\n".join([page.extract_text() or "" for page in reader.pages]))
+        raw_pages_text = [normalize_text(page.extract_text() or "") for page in reader.pages]
+        full_text = "\n".join(raw_pages_text)
         
         # 1. Extract Ref No
         ref_no = ""
-        ref_match = re.search(r'(?:Ref|REF|Enquiry|Tender|PO)\.?\s*(?:No|NO)?\.?\s*[:\-]?\s*([A-Za-z0-9_/(\)\-]+)', text)
-        if ref_match and len(ref_match.group(1).strip()) > 2:
-            ref_no = ref_match.group(1).strip()
+        ref_patterns = [
+            r'(?:Ref|REF|Enquiry|Tender|PO|File|Letter)\.?\s*(?:No|NO)?\.?\s*[:\-]?\s*([A-Za-z0-9_/(\)\-]+)',
+            r'([A-Z0-9]+/[A-Z0-9_\-]+/[A-Z0-9_\-]+/\d+)',
+            r'No\.?\s*([A-Za-z0-9_/(\)\-]+)'
+        ]
+        for pat in ref_patterns:
+            m = re.search(pat, full_text)
+            if m and len(m.group(1).strip()) > 3:
+                ref_no = m.group(1).strip()
+                break
 
         # 2. Extract Date
         ref_date = ""
-        date_match = re.search(r'Date[d]?\s*[:\-]?\s*([0-9]{1,2}[-/\.][0-9]{1,2}[-/\.][0-9]{2,4})', text, re.IGNORECASE)
-        if date_match:
-            ref_date = date_match.group(1).strip()
+        date_m = re.search(r'Date[d]?\s*[:\-]?\s*([0-9]{1,2}[-/\.][0-9]{1,2}[-/\.][0-9]{2,4})', full_text, re.IGNORECASE)
+        if date_m:
+            ref_date = date_m.group(1).strip()
 
         # 3. Extract Recipient / Consignee Address
         consignee = ""
-        if "MALDA" in text.upper():
+        if "MALDA" in full_text.upper():
             consignee = "Sr. DME,\nEASTERN RAILWAY\nMALDA"
-        elif "DIESEL" in text.upper():
+        elif "DIESEL" in full_text.upper():
             consignee = "AWM (DIESEL)\nEASTERN RLY, JAMALPUR"
-        elif "CMT" in text.upper():
+        elif "CMT" in full_text.upper():
             consignee = "Dy, CMT\nEASTERN RLY. JAMALPUR"
+        elif "WHEEL" in full_text.upper():
+            consignee = "AWM (WHEEL)\nEASTERN RLY, JAMALPUR"
 
-        # 4. Filter out Footer Terms & Conditions before parsing item table
-        # Cut text off at Terms & Condition / Footer signatures
-        cutoff_patterns = [
-            r'Terms\s*(?:&|and)\s*Condition',
-            r'\(1\)\s*GST',
-            r'For\s+Destination',
-            r'Delivery\s+within',
-            r'Inspection\s+by',
-            r'Payment\s+100%',
-            r'Proprietor'
-        ]
-        
-        table_text = text
-        for pat in cutoff_patterns:
-            parts = re.split(pat, table_text, flags=re.IGNORECASE)
-            if len(parts) > 1 and len(parts[0].strip()) > 50:
-                table_text = parts[0]
-
+        # 4. Extract Material Items / Particulars
         items = []
-        lines = [l.strip() for l in table_text.split('\n') if l.strip()]
+        lines = [l.strip() for l in full_text.split('\n') if l.strip()]
 
-        # Ignore lines matching common non-item metadata
-        ignore_keywords = [
-            'gstin', 'vender code', 'vendor code', 'mob', 'phone', 'email', 'budgetary quotation',
-            'terms & condition', 'terms and conditions', 'delivery within', 'for destination',
-            'gst@', 'inspection by', 'payment 100%', 'proprietor', 'contractor', 'sl. no',
-            'sr. no', 'description', 'particulars', 'qty', 'rate', 'unit', 'amount', 'to.', 'to,'
+        skip_keywords = [
+            'gstin', 'vender code', 'vendor code', 'mob', 'phone', 'email',
+            'budgetary quotation', 'terms & condition', 'terms and conditions',
+            'delivery within', 'for destination', 'gst@', 'inspection by',
+            'payment 100%', 'proprietor', 'contractor', 'sl. no', 'sr. no',
+            'description', 'particulars', 'qty', 'rate', 'unit', 'amount',
+            'railway contractor', 'm/s raju', 'lovely general', 'hind traders',
+            'yasha enterprises', 'madhu enterprises'
         ]
 
-        unit_regex = re.compile(r'\b(mtr|metres?|nos?|sets?|kgs?|pcs?|pairs?|pkts?|ltrs?|box|dozen|roll)\b', re.IGNORECASE)
+        unit_pattern = re.compile(r'\b(mtr|metres?|nos?|sets?|kgs?|pcs?|pairs?|pkts?|ltrs?|box|dozen|roll)\b', re.IGNORECASE)
 
         sr_counter = 1
         current_item = None
 
         for line in lines:
             line_lower = line.lower()
-            if any(kw in line_lower for kw in ignore_keywords):
+            if any(kw in line_lower for kw in skip_keywords):
                 continue
             if len(line) < 3:
                 continue
 
-            # Item row starts with explicit digits like "1.", "1)", "1 ", "[1]", "01."
-            # Do NOT match terms like "(1) GST" which was filtered out above
-            idx_match = re.match(r'^(?:\[?\s*(\d{1,3})\s*\]?[\.\)\-]?)\s*(.+)', line)
+            # Check if line starts with an item serial number e.g. "1.", "1)", "1 ", "[1]", "01.", "1-"
+            idx_match = re.match(r'^(?:\[?\s*(\d{1,3})\s*\]?[\.\)\-]?)\s+(.+)', line)
 
-            if idx_match and int(idx_match.group(1)) <= 100:
-                sr_num = int(idx_match.group(1))
+            # Check for footer terms like "(1) GST@18% Extra" or "(2) For Destination"
+            is_footer_term = bool(re.search(r'\(\d\)\s*(?:GST|For Destination|Delivery|Inspection|Payment|CRN)', line, re.IGNORECASE))
+
+            if idx_match and not is_footer_term and int(idx_match.group(1)) <= 100:
                 raw_desc = idx_match.group(2).strip()
 
-                # Clean rate info from line
                 clean_desc = re.sub(r'^(?:Description|Particulars|Item)\s*[:\-]?\s*', '', raw_desc, flags=re.IGNORECASE).strip()
                 clean_desc = re.sub(r'\s+Rs\.?\s*\d+.*$', '', clean_desc, flags=re.IGNORECASE).strip()
                 clean_desc = re.sub(r'\s+₹\s*\d+.*$', '', clean_desc).strip()
 
                 unit_found = "Nos"
-                unit_m = unit_regex.search(clean_desc)
+                unit_m = unit_pattern.search(clean_desc)
                 if unit_m:
-                    found_str = unit_m.group(1)
-                    if found_str.lower() in ['mtr', 'meter', 'metres']:
+                    found_str = unit_m.group(1).lower()
+                    if found_str in ['mtr', 'meter', 'metres']:
                         unit_found = "mtr"
-                    elif found_str.lower() in ['set', 'sets']:
+                    elif found_str in ['set', 'sets']:
                         unit_found = "Set"
-                    elif found_str.lower() in ['kg', 'kgs']:
+                    elif found_str in ['kg', 'kgs']:
                         unit_found = "Kg"
-                    elif found_str.lower() in ['pc', 'pcs']:
+                    elif found_str in ['pc', 'pcs']:
                         unit_found = "Pc"
-                    elif found_str.lower() in ['no', 'nos']:
+                    elif found_str in ['no', 'nos']:
                         unit_found = "Nos"
                     else:
-                        unit_found = found_str
+                        unit_found = found_str.capitalize()
 
                 qty_found = 1
                 qty_m = re.search(r'(\d+(?:\.\d+)?)\s*(?:mtr|nos|set|kg|pc|no|meter)\b', line, re.IGNORECASE)
@@ -266,9 +264,8 @@ def parse_quotation_local_pdf(file_path: str) -> Dict[str, Any]:
                     "quantity": int(qty_found) if float(qty_found).is_integer() else qty_found
                 }
                 sr_counter += 1
-            elif current_item and len(line) > 3 and not line_lower.startswith('ref') and not line_lower.startswith('date'):
-                # Append continuation lines to current item description if not starting a new item
-                if not re.search(r'^(?:GSTIN|MSME|UDYAM|Mob|DATE|REF)', line, re.IGNORECASE):
+            elif current_item and not is_footer_term:
+                if len(line) > 2 and not line_lower.startswith('ref') and not line_lower.startswith('date'):
                     current_item["description"] += " " + line
 
         if current_item:
@@ -281,7 +278,7 @@ def parse_quotation_local_pdf(file_path: str) -> Dict[str, Any]:
             "items": items
         }
     except Exception as e:
-        logger.error(f"Local PDF quotation fallback error: {e}")
+        logger.error(f"Local PDF quotation parser error: {e}")
         return get_default_quotation_data()
 
 def format_parsed_quotation_data(parsed: Dict[str, Any]) -> Dict[str, Any]:
@@ -291,7 +288,6 @@ def format_parsed_quotation_data(parsed: Dict[str, Any]) -> Dict[str, Any]:
         desc = str(item.get("description", "")).strip()
         desc = re.sub(r'^\d+[\.\)]\s*', '', desc).strip()
 
-        # Ignore any item extracted from terms & conditions
         if re.search(r'(?:GST@|For Destination|Delivery within|Inspection by|Payment 100%|against CRN)', desc, re.IGNORECASE):
             continue
 

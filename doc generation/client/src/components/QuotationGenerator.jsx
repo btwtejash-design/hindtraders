@@ -34,34 +34,34 @@ export default function QuotationGenerator({ poData }) {
     items: []
   });
 
-  // Organization Specific States
+  // Organization Specific States (Default document reference numbers pre-filled)
   const [hindData, setHindData] = useState({
-    quotation_ref: '',
-    quotation_date: '',
+    quotation_ref: 'HT/BQ/26-27',
+    quotation_date: '03/08/2026',
     rates: {}
   });
 
   const [yashaData, setYashaData] = useState({
-    quotation_ref: '',
-    quotation_date: '',
+    quotation_ref: 'YE/BQ/26-27',
+    quotation_date: '04/08/2026',
     rates: {}
   });
 
   const [madhuData, setMadhuData] = useState({
-    quotation_ref: '',
-    quotation_date: '',
+    quotation_ref: 'ME/12/26-27',
+    quotation_date: '06/05/2026',
     rates: {}
   });
 
   const [lovelyData, setLovelyData] = useState({
-    quotation_ref: '',
-    quotation_date: '',
+    quotation_ref: 'LV/23/26-27',
+    quotation_date: '29/04/2026',
     rates: {}
   });
 
   const [rajuData, setRajuData] = useState({
-    quotation_ref: '',
-    quotation_date: '',
+    quotation_ref: 'REW/BQ/26-27',
+    quotation_date: '02/06/2026',
     rates: {}
   });
 
