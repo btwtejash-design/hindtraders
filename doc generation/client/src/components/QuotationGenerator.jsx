@@ -26,54 +26,43 @@ export default function QuotationGenerator({ poData }) {
   const [savedRecords, setSavedRecords] = useState([]);
   const [showSavedList, setShowSavedList] = useState(false);
 
-  // Common Details State
+  // Common Details State (Starts empty until loaded, imported, uploaded, or added)
   const [commonData, setCommonData] = useState({
-    ref_no: 'F/DPS/MMC(D)/27',
-    ref_date: '28/04/2026',
-    consignee_address: 'AWM (WHEEL)\nEASTERN RLY, JAMALPUR',
-    items: [
-      { sr_no: 1, description: 'Heat Shrink tube Transparent Inner Dia Size – 3mm', unit: 'mtr', quantity: 1 },
-      { sr_no: 2, description: 'Heat Shrink tube Transparent Inner Dia Size – 5mm', unit: 'mtr', quantity: 1 },
-      { sr_no: 3, description: 'Heat Shrink tube Transparent Inner Dia Size – 10mm', unit: 'mtr', quantity: 1 },
-      { sr_no: 4, description: 'Heat Shrink tube Transparent Inner Dia Size – 15mm', unit: 'mtr', quantity: 1 },
-      { sr_no: 5, description: 'Heat Shrink tube Transparent Inner Dia Size – 20mm', unit: 'mtr', quantity: 1 },
-      { sr_no: 6, description: 'Rubber Gasket Seal for Locomotive Assembly', unit: 'Nos', quantity: 1 },
-      { sr_no: 7, description: 'Hex Head Screw M8 x 25mm Stainless Steel', unit: 'Nos', quantity: 1 },
-      { sr_no: 8, description: 'Copper Washer Ring Inner Dia 12mm', unit: 'Nos', quantity: 1 },
-      { sr_no: 9, description: 'Insulating Sleeve Sleeving 6mm', unit: 'mtr', quantity: 1 },
-      { sr_no: 10, description: 'Steel Pin Cotter Lock Type B', unit: 'Nos', quantity: 1 }
-    ]
+    ref_no: '',
+    ref_date: '',
+    consignee_address: '',
+    items: []
   });
 
   // Organization Specific States
   const [hindData, setHindData] = useState({
-    quotation_ref: 'HT/BQ/26-27',
-    quotation_date: '03/08/2026',
-    rates: { 1: '22', 2: '28', 3: '45', 4: '55', 5: '68', 6: '120', 7: '15', 8: '18', 9: '35', 10: '42' }
+    quotation_ref: '',
+    quotation_date: '',
+    rates: {}
   });
 
   const [yashaData, setYashaData] = useState({
-    quotation_ref: 'YE/BQ/26-27',
-    quotation_date: '04/08/2026',
-    rates: { 1: '12', 2: '16', 3: '25', 4: '32', 5: '40', 6: '95', 7: '10', 8: '12', 9: '22', 10: '30' }
+    quotation_ref: '',
+    quotation_date: '',
+    rates: {}
   });
 
   const [madhuData, setMadhuData] = useState({
-    quotation_ref: 'ME/12/26-27',
-    quotation_date: '06/05/2026',
-    rates: { 1: '95', 2: '98', 3: '105', 4: '115', 5: '130', 6: '180', 7: '25', 8: '28', 9: '50', 10: '65' }
+    quotation_ref: '',
+    quotation_date: '',
+    rates: {}
   });
 
   const [lovelyData, setLovelyData] = useState({
-    quotation_ref: 'LV/23/26-27',
-    quotation_date: '29/04/2026',
-    rates: { 1: '90', 2: '95', 3: '99', 4: '110', 5: '125', 6: '170', 7: '22', 8: '25', 9: '45', 10: '60' }
+    quotation_ref: '',
+    quotation_date: '',
+    rates: {}
   });
 
   const [rajuData, setRajuData] = useState({
-    quotation_ref: 'REW/BQ/26-27',
-    quotation_date: '02/06/2026',
-    rates: { 1: '85', 2: '90', 3: '95', 4: '105', 5: '120', 6: '160', 7: '20', 8: '22', 9: '40', 10: '55' }
+    quotation_ref: '',
+    quotation_date: '',
+    rates: {}
   });
 
   const [lowestOrgKey, setLowestOrgKey] = useState('hind'); // 'hind' | 'yasha' | 'madhu' | 'lovely' | 'raju'
@@ -563,56 +552,81 @@ export default function QuotationGenerator({ poData }) {
                 </button>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {commonData.items.map((item, idx) => (
-                  <div key={idx} style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '0.75rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                      <span style={{ background: '#334155', color: '#94a3b8', padding: '0.1rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                        #{idx + 1}
-                      </span>
-                      <input
-                        type="text"
-                        className="input-field"
-                        value={item.description}
-                        onChange={(e) => handleUpdateItem(idx, 'description', e.target.value)}
-                        placeholder="Item Description / Material Specification"
-                        style={{ flex: 1, fontSize: '0.9rem', padding: '0.4rem 0.6rem' }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteItem(idx)}
-                        style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '4px', padding: '0.4rem', cursor: 'pointer' }}
-                        title="Delete Item"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                      <div>
-                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Unit (e.g. mtr, Nos, Set)</span>
+              {commonData.items.length === 0 ? (
+                <div style={{
+                  background: '#0f172a',
+                  border: '2px dashed #334155',
+                  borderRadius: '8px',
+                  padding: '2rem 1.5rem',
+                  textAlign: 'center',
+                  color: '#94a3b8'
+                }}>
+                  <FileText size={36} color="#64748b" style={{ margin: '0 auto 0.5rem auto', display: 'block' }} />
+                  <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#cbd5e1' }}>No Particulars Loaded Yet</div>
+                  <div style={{ fontSize: '0.82rem', marginTop: '0.35rem', color: '#64748b', maxWidth: '420px', margin: '0.35rem auto 0 auto', lineHeight: 1.4 }}>
+                    Fields start empty by default. Upload a document (PDF/Photo) above, import from active PO, load a saved draft, or add manually below.
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handleAddItem}
+                    style={{ marginTop: '1rem', fontSize: '0.85rem', padding: '0.45rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}
+                  >
+                    <Plus size={16} /> Add First Particular
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {commonData.items.map((item, idx) => (
+                    <div key={idx} style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        <span style={{ background: '#334155', color: '#94a3b8', padding: '0.1rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                          #{idx + 1}
+                        </span>
                         <input
                           type="text"
                           className="input-field"
-                          value={item.unit}
-                          onChange={(e) => handleUpdateItem(idx, 'unit', e.target.value)}
-                          style={{ width: '100%', fontSize: '0.85rem', padding: '0.35rem 0.5rem', marginTop: '0.2rem' }}
+                          value={item.description}
+                          onChange={(e) => handleUpdateItem(idx, 'description', e.target.value)}
+                          placeholder="Item Description / Material Specification"
+                          style={{ flex: 1, fontSize: '0.9rem', padding: '0.4rem 0.6rem' }}
                         />
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteItem(idx)}
+                          style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '4px', padding: '0.4rem', cursor: 'pointer' }}
+                          title="Delete Item"
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       </div>
-                      <div>
-                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Quantity (Editable)</span>
-                        <input
-                          type="number"
-                          className="input-field"
-                          value={item.quantity}
-                          onChange={(e) => handleUpdateItem(idx, 'quantity', parseFloat(e.target.value) || 1)}
-                          style={{ width: '100%', fontSize: '0.85rem', padding: '0.35rem 0.5rem', marginTop: '0.2rem' }}
-                        />
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Unit (e.g. mtr, Nos, Set)</span>
+                          <input
+                            type="text"
+                            className="input-field"
+                            value={item.unit}
+                            onChange={(e) => handleUpdateItem(idx, 'unit', e.target.value)}
+                            style={{ width: '100%', fontSize: '0.85rem', padding: '0.35rem 0.5rem', marginTop: '0.2rem' }}
+                          />
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Quantity (Editable)</span>
+                          <input
+                            type="number"
+                            className="input-field"
+                            value={item.quantity}
+                            onChange={(e) => handleUpdateItem(idx, 'quantity', parseFloat(e.target.value) || 1)}
+                            style={{ width: '100%', fontSize: '0.85rem', padding: '0.35rem 0.5rem', marginTop: '0.2rem' }}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

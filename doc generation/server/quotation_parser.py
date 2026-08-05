@@ -45,7 +45,7 @@ def parse_quotation_input_file(file_path: str, mime_type: str = None) -> Dict[st
         return parse_quotation_local_pdf(file_path)
 
     # 3. Fallback for image files if AI key is missing or fails
-    logger.info("Using default quotation structure")
+    logger.info("Fallback empty quotation structure")
     return get_default_quotation_data()
 
 def parse_quotation_with_gemini(file_path: str, mime_type: str = None) -> Dict[str, Any]:
@@ -99,19 +99,19 @@ JSON Schema:
       "sr_no": 1,
       "description": "string (Exact item description & technical specification as printed in document)",
       "unit": "string (e.g. mtr, Nos, Set, Kg, Pc, NO)",
-      "quantity": 1,
-      "rate": 100.0
+      "quantity": 1
     }
   ]
 }
 
 CRITICAL RULES:
-1. Extract EVERY SINGLE material item listed in the document table. Do NOT omit, skip, or summarize any item row.
-2. Count all rows from top to bottom. If there are 3 items, return 3. If there are 10 items, return all 10.
-3. Clean the "description" field so it contains only the actual item specification (do not include table header words like "Description" or "Sl. No").
-4. "unit" should be extracted (e.g., mtr, Nos, Set, Kg, Pc, NO). Default to "Nos" if missing.
-5. "quantity" should be numeric. Default to 1 if missing.
-6. Return ONLY raw valid JSON matching the schema above without markdown formatting codeblocks.
+1. Extract ONLY actual material items / particulars listed in the item table.
+2. DO NOT include footer terms & conditions (e.g., "(1) GST@18% Extra", "(2) For Destination", "(3) Delivery within 30 days", "(4) Inspection", "(5) Payment 100%"). Those are terms, NOT material particulars!
+3. If the table lists 10 material items, extract ALL 10 items accurately without truncating or omitting any row.
+4. Clean the "description" field so it contains only the actual item specification.
+5. "unit" should be extracted (e.g., mtr, Nos, Set, Kg, Pc, NO). Default to "Nos" if missing.
+6. "quantity" should be numeric. Default to 1 if missing.
+7. Return ONLY raw valid JSON matching the schema above without markdown formatting codeblocks.
 """
         contents.append(prompt)
 
@@ -161,17 +161,15 @@ def parse_quotation_local_pdf(file_path: str) -> Dict[str, Any]:
         ref_match = re.search(r'(?:Ref|REF|Enquiry|Tender|PO)\.?\s*(?:No|NO)?\.?\s*[:\-]?\s*([A-Za-z0-9_/(\)\-]+)', text)
         if ref_match and len(ref_match.group(1).strip()) > 2:
             ref_no = ref_match.group(1).strip()
-        else:
-            ref_no = "F/DPS/MMC(D)/27"
 
         # 2. Extract Date
-        ref_date = "28/04/2026"
+        ref_date = ""
         date_match = re.search(r'Date[d]?\s*[:\-]?\s*([0-9]{1,2}[-/\.][0-9]{1,2}[-/\.][0-9]{2,4})', text, re.IGNORECASE)
         if date_match:
             ref_date = date_match.group(1).strip()
 
         # 3. Extract Recipient / Consignee Address
-        consignee = "AWM (WHEEL)\nEASTERN RLY, JAMALPUR"
+        consignee = ""
         if "MALDA" in text.upper():
             consignee = "Sr. DME,\nEASTERN RAILWAY\nMALDA"
         elif "DIESEL" in text.upper():
@@ -179,41 +177,60 @@ def parse_quotation_local_pdf(file_path: str) -> Dict[str, Any]:
         elif "CMT" in text.upper():
             consignee = "Dy, CMT\nEASTERN RLY. JAMALPUR"
 
-        # 4. Extract Material Items / Particulars
+        # 4. Filter out Footer Terms & Conditions before parsing item table
+        # Cut text off at Terms & Condition / Footer signatures
+        cutoff_patterns = [
+            r'Terms\s*(?:&|and)\s*Condition',
+            r'\(1\)\s*GST',
+            r'For\s+Destination',
+            r'Delivery\s+within',
+            r'Inspection\s+by',
+            r'Payment\s+100%',
+            r'Proprietor'
+        ]
+        
+        table_text = text
+        for pat in cutoff_patterns:
+            parts = re.split(pat, table_text, flags=re.IGNORECASE)
+            if len(parts) > 1 and len(parts[0].strip()) > 50:
+                table_text = parts[0]
+
         items = []
-        lines = [l.strip() for l in text.split('\n') if l.strip()]
+        lines = [l.strip() for l in table_text.split('\n') if l.strip()]
 
         # Ignore lines matching common non-item metadata
         ignore_keywords = [
             'gstin', 'vender code', 'vendor code', 'mob', 'phone', 'email', 'budgetary quotation',
             'terms & condition', 'terms and conditions', 'delivery within', 'for destination',
             'gst@', 'inspection by', 'payment 100%', 'proprietor', 'contractor', 'sl. no',
-            'sr. no', 'description', 'particulars', 'qty', 'rate', 'unit', 'amount'
+            'sr. no', 'description', 'particulars', 'qty', 'rate', 'unit', 'amount', 'to.', 'to,'
         ]
 
-        unit_regex = re.compile(r'\b(mtr|metres?|nos?|sets?|kgs?|pcs?|pairs?|pkts?|ltrs?|box|dozen|roll|mm)\b', re.IGNORECASE)
+        unit_regex = re.compile(r'\b(mtr|metres?|nos?|sets?|kgs?|pcs?|pairs?|pkts?|ltrs?|box|dozen|roll)\b', re.IGNORECASE)
 
         sr_counter = 1
+        current_item = None
+
         for line in lines:
             line_lower = line.lower()
             if any(kw in line_lower for kw in ignore_keywords):
                 continue
-            if len(line) < 4:
+            if len(line) < 3:
                 continue
 
-            # Check if line starts with index e.g., "1.", "1)", "1 ", "[1]"
-            idx_match = re.match(r'^(?:\[?\s*(\d{1,3})\s*\]?[\.\)\-]?|\(\d{1,3}\))\s*(.+)', line)
-            has_unit = bool(unit_regex.search(line))
+            # Item row starts with explicit digits like "1.", "1)", "1 ", "[1]", "01."
+            # Do NOT match terms like "(1) GST" which was filtered out above
+            idx_match = re.match(r'^(?:\[?\s*(\d{1,3})\s*\]?[\.\)\-]?)\s*(.+)', line)
 
-            if idx_match or has_unit:
-                raw_desc = idx_match.group(2) if idx_match else line
-                
-                # Clean description
+            if idx_match and int(idx_match.group(1)) <= 100:
+                sr_num = int(idx_match.group(1))
+                raw_desc = idx_match.group(2).strip()
+
+                # Clean rate info from line
                 clean_desc = re.sub(r'^(?:Description|Particulars|Item)\s*[:\-]?\s*', '', raw_desc, flags=re.IGNORECASE).strip()
                 clean_desc = re.sub(r'\s+Rs\.?\s*\d+.*$', '', clean_desc, flags=re.IGNORECASE).strip()
                 clean_desc = re.sub(r'\s+₹\s*\d+.*$', '', clean_desc).strip()
 
-                # Extract unit if found
                 unit_found = "Nos"
                 unit_m = unit_regex.search(clean_desc)
                 if unit_m:
@@ -231,7 +248,6 @@ def parse_quotation_local_pdf(file_path: str) -> Dict[str, Any]:
                     else:
                         unit_found = found_str
 
-                # Extract quantity if specified e.g. "1 Nos", "10 mtr"
                 qty_found = 1
                 qty_m = re.search(r'(\d+(?:\.\d+)?)\s*(?:mtr|nos|set|kg|pc|no|meter)\b', line, re.IGNORECASE)
                 if qty_m:
@@ -240,17 +256,23 @@ def parse_quotation_local_pdf(file_path: str) -> Dict[str, Any]:
                     except ValueError:
                         qty_found = 1
 
-                if len(clean_desc) > 3 and not clean_desc.isdigit():
-                    items.append({
-                        "sr_no": sr_counter,
-                        "description": clean_desc,
-                        "unit": unit_found,
-                        "quantity": int(qty_found) if float(qty_found).is_integer() else qty_found
-                    })
-                    sr_counter += 1
+                if current_item:
+                    items.append(current_item)
 
-        if not items:
-            items = get_default_quotation_data()["items"]
+                current_item = {
+                    "sr_no": sr_counter,
+                    "description": clean_desc,
+                    "unit": unit_found,
+                    "quantity": int(qty_found) if float(qty_found).is_integer() else qty_found
+                }
+                sr_counter += 1
+            elif current_item and len(line) > 3 and not line_lower.startswith('ref') and not line_lower.startswith('date'):
+                # Append continuation lines to current item description if not starting a new item
+                if not re.search(r'^(?:GSTIN|MSME|UDYAM|Mob|DATE|REF)', line, re.IGNORECASE):
+                    current_item["description"] += " " + line
+
+        if current_item:
+            items.append(current_item)
 
         return {
             "ref_no": ref_no,
@@ -267,8 +289,11 @@ def format_parsed_quotation_data(parsed: Dict[str, Any]) -> Dict[str, Any]:
     raw_items = parsed.get("items", [])
     for idx, item in enumerate(raw_items, 1):
         desc = str(item.get("description", "")).strip()
-        # Clean off leading numbers e.g. "1. Heat Shrink..." -> "Heat Shrink..."
         desc = re.sub(r'^\d+[\.\)]\s*', '', desc).strip()
+
+        # Ignore any item extracted from terms & conditions
+        if re.search(r'(?:GST@|For Destination|Delivery within|Inspection by|Payment 100%|against CRN)', desc, re.IGNORECASE):
+            continue
 
         qty_val = item.get("quantity")
         qty_num = 1
@@ -281,87 +306,23 @@ def format_parsed_quotation_data(parsed: Dict[str, Any]) -> Dict[str, Any]:
                 qty_num = 1
 
         items.append({
-            "sr_no": item.get("sr_no", idx),
+            "sr_no": idx,
             "description": desc or f"Material Item #{idx}",
             "unit": str(item.get("unit", "Nos")).strip(),
             "quantity": int(qty_num) if float(qty_num).is_integer() else qty_num
         })
 
-    if not items:
-        items = get_default_quotation_data()["items"]
-
     return {
-        "ref_no": parsed.get("ref_no", "F/DPS/MMC(D)/27"),
-        "ref_date": parsed.get("ref_date", "28/04/2026"),
-        "consignee_address": parsed.get("consignee_address", "AWM (WHEEL)\nEASTERN RLY, JAMALPUR"),
+        "ref_no": parsed.get("ref_no", ""),
+        "ref_date": parsed.get("ref_date", ""),
+        "consignee_address": parsed.get("consignee_address", ""),
         "items": items
     }
 
 def get_default_quotation_data() -> Dict[str, Any]:
     return {
-        "ref_no": "F/DPS/MMC(D)/27",
-        "ref_date": "28/04/2026",
-        "consignee_address": "AWM (WHEEL)\nEASTERN RLY, JAMALPUR",
-        "items": [
-            {
-                "sr_no": 1,
-                "description": "Heat Shrink tube Transparent Inner Dia Size – 3mm",
-                "unit": "mtr",
-                "quantity": 1
-            },
-            {
-                "sr_no": 2,
-                "description": "Heat Shrink tube Transparent Inner Dia Size – 5mm",
-                "unit": "mtr",
-                "quantity": 1
-            },
-            {
-                "sr_no": 3,
-                "description": "Heat Shrink tube Transparent Inner Dia Size – 10mm",
-                "unit": "mtr",
-                "quantity": 1
-            },
-            {
-                "sr_no": 4,
-                "description": "Heat Shrink tube Transparent Inner Dia Size – 15mm",
-                "unit": "mtr",
-                "quantity": 1
-            },
-            {
-                "sr_no": 5,
-                "description": "Heat Shrink tube Transparent Inner Dia Size – 20mm",
-                "unit": "mtr",
-                "quantity": 1
-            },
-            {
-                "sr_no": 6,
-                "description": "Rubber Gasket Seal for Locomotive Assembly",
-                "unit": "Nos",
-                "quantity": 1
-            },
-            {
-                "sr_no": 7,
-                "description": "Hex Head Screw M8 x 25mm Stainless Steel",
-                "unit": "Nos",
-                "quantity": 1
-            },
-            {
-                "sr_no": 8,
-                "description": "Copper Washer Ring Inner Dia 12mm",
-                "unit": "Nos",
-                "quantity": 1
-            },
-            {
-                "sr_no": 9,
-                "description": "Insulating Sleeve Sleeving 6mm",
-                "unit": "mtr",
-                "quantity": 1
-            },
-            {
-                "sr_no": 10,
-                "description": "Steel Pin Cotter Lock Type B",
-                "unit": "Nos",
-                "quantity": 1
-            }
-        ]
+        "ref_no": "",
+        "ref_date": "",
+        "consignee_address": "",
+        "items": []
     }
