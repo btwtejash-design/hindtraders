@@ -591,10 +591,10 @@ def generate_lovely_quotation_pdf(data: Dict[str, Any], output_path: str) -> str
 
         items_html += f"""
         <tr style="height: 38px;">
-            <td style="border: 1px solid #000; text-align: center; font-weight: bold; font-size: 10pt;">{sr}</td>
-            <td style="border: 1px solid #000; padding: 6px 10px; font-weight: bold; font-size: 9.5pt;">{desc}</td>
-            <td style="border: 1px solid #000; text-align: center; font-weight: bold; font-size: 10pt;">{qty_str}</td>
-            <td style="border: 1px solid #000; text-align: center; font-weight: bold; font-size: 10pt;">{rate_display}</td>
+            <td style="border: 1px solid #cbd5e1; text-align: center; font-weight: bold; font-size: 10pt;">{sr}</td>
+            <td style="border: 1px solid #cbd5e1; padding: 6px 10px; font-weight: bold; font-size: 9.5pt;">{desc}</td>
+            <td style="border: 1px solid #cbd5e1; text-align: center; font-weight: bold; font-size: 10pt;">{qty_str}</td>
+            <td style="border: 1px solid #cbd5e1; text-align: center; font-weight: bold; font-size: 10pt;">{rate_display}</td>
         </tr>
         """
 
@@ -616,9 +616,9 @@ def generate_lovely_quotation_pdf(data: Dict[str, Any], output_path: str) -> str
                 }}
             }}
             body {{
-                font-family: Garamond, 'Times New Roman', serif;
+                font-family: 'Times New Roman', Times, Georgia, serif;
                 font-size: 9.5pt;
-                line-height: 1.3;
+                line-height: 1.35;
                 color: #000;
             }}
             .header-table {{
@@ -633,8 +633,8 @@ def generate_lovely_quotation_pdf(data: Dict[str, Any], output_path: str) -> str
                 margin-bottom: 15px;
             }}
             .items-table th {{
-                border: 1px solid #000;
-                background-color: #222222;
+                border: 1px solid #4a5568;
+                background-color: #2d3748;
                 color: #ffffff;
                 padding: 6px 8px;
                 font-weight: bold;
@@ -647,8 +647,8 @@ def generate_lovely_quotation_pdf(data: Dict[str, Any], output_path: str) -> str
         <table class="header-table">
             <tr>
                 <td width="50%" style="vertical-align: top; font-size: 8.5pt; font-weight: bold; font-style: italic;">
-                    GSTIN- 10EOBPK6340Q1ZU<br/>
-                    Vender Code: 57722
+                    <u>GSTIN-</u> 10EOBPK6340Q1ZU<br/>
+                    <u>Vender Code:</u> 57722
                 </td>
                 <td width="50%" style="text-align: right; vertical-align: top; font-size: 8.5pt; font-weight: bold; font-style: italic;">
                     <u>Mob.:</u> 9852949143
@@ -663,7 +663,7 @@ def generate_lovely_quotation_pdf(data: Dict[str, Any], output_path: str) -> str
         <table style="width: 100%; margin-bottom: 10px; font-weight: bold; font-style: italic; font-size: 10pt;">
             <tr>
                 <td><u>Ref:-</u> {org_ref}</td>
-                <td style="text-align: right;">Date:- {org_date}</td>
+                <td style="text-align: right;"><u>Date:-</u> {org_date}</td>
             </tr>
         </table>
 
@@ -777,9 +777,9 @@ def generate_raju_quotation_pdf(data: Dict[str, Any], output_path: str) -> str:
                 }}
             }}
             body {{
-                font-family: Helvetica, Arial, sans-serif;
+                font-family: 'Courier New', Courier, monospace;
                 font-size: 9.2pt;
-                line-height: 1.35;
+                line-height: 1.4;
                 color: #000;
             }}
             .header-table {{
@@ -790,17 +790,19 @@ def generate_raju_quotation_pdf(data: Dict[str, Any], output_path: str) -> str:
             .items-table {{
                 width: 100%;
                 border-collapse: collapse;
+                border: 2px solid #000;
                 margin-top: 15px;
                 margin-bottom: 15px;
             }}
             .items-table th {{
                 border: 1px solid #000;
-                background-color: #111827;
+                background-color: #000000;
                 color: #ffffff;
                 padding: 6px 8px;
                 font-weight: bold;
                 font-size: 10pt;
                 text-align: center;
+                letter-spacing: 1px;
             }}
         </style>
     </head>
@@ -831,7 +833,7 @@ def generate_raju_quotation_pdf(data: Dict[str, Any], output_path: str) -> str:
             </tr>
         </table>
 
-        <hr style="border: none; border-top: 1px solid #000; margin: 4px 0 12px 0;" />
+        <hr style="border: none; border-top: 2px solid #000; margin: 4px 0 12px 0;" />
 
         <div style="margin-bottom: 15px; font-weight: bold; font-size: 10pt; line-height: 1.4;">
             To.<br/>
@@ -848,7 +850,7 @@ def generate_raju_quotation_pdf(data: Dict[str, Any], output_path: str) -> str:
         <table class="items-table">
             <thead>
                 <tr>
-                    <th width="10%">Sr. No</th>
+                    <th width="10%">SR. NO</th>
                     <th width="60%">DESCRIPTION</th>
                     <th width="15%">QTY</th>
                     <th width="15%">RATE</th>
@@ -870,7 +872,7 @@ def generate_raju_quotation_pdf(data: Dict[str, Any], output_path: str) -> str:
                         (5) Payment 100% against CRN
                     </td>
                     <td width="45%" style="text-align: right; vertical-align: bottom;">
-                        <div style="border: 1px dashed #000; padding: 8px; text-align: center; display: inline-block;">
+                        <div style="border: 2px dashed #000; padding: 8px; text-align: center; display: inline-block;">
                             <b>M/S RAJU ENGINEERING WORKS</b><br/><br/>
                             <span style="font-size: 8.5pt;">Proprietor</span>
                         </div>

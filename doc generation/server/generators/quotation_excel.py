@@ -276,47 +276,47 @@ def generate_lovely_quotation_excel(data: Dict[str, Any], output_path: str) -> s
 
     ws.merge_cells("A1:D1")
     ws["A1"] = "LOVELY GENERAL ORDER SUPPLIER"
-    ws["A1"].font = Font(name="Garamond", size=16, bold=True, color="000000")
+    ws["A1"].font = Font(name="Times New Roman", size=16, bold=True, color="000000")
     ws["A1"].alignment = Alignment(horizontal="center")
 
     ws.merge_cells("A2:D2")
     ws["A2"] = "GSTIN: 10EOBPK6340Q1ZU | Vender Code: 57722 | Mob: 9852949143"
-    ws["A2"].font = Font(name="Garamond", size=9, italic=True)
+    ws["A2"].font = Font(name="Times New Roman", size=9, italic=True)
     ws["A2"].alignment = Alignment(horizontal="center")
 
     ws.merge_cells("A3:D3")
     ws["A3"] = "Budgetary Quotation"
-    ws["A3"].font = Font(name="Garamond", size=12, bold=True, underline="single")
+    ws["A3"].font = Font(name="Times New Roman", size=12, bold=True, underline="single")
     ws["A3"].alignment = Alignment(horizontal="center")
 
     ws["A5"] = f"Ref:- {org_ref}"
     ws["D5"] = f"Date:- {org_date}"
-    ws["A5"].font = Font(name="Garamond", bold=True)
-    ws["D5"].font = Font(name="Garamond", bold=True)
+    ws["A5"].font = Font(name="Times New Roman", bold=True, italic=True)
+    ws["D5"].font = Font(name="Times New Roman", bold=True, italic=True)
     ws["D5"].alignment = Alignment(horizontal="right")
 
     ws["A6"] = f"TO:\n{consignee}"
-    ws["A6"].font = Font(name="Garamond", bold=True)
+    ws["A6"].font = Font(name="Times New Roman", bold=True)
 
     ws["A8"] = f"Ref:- {ref_no}"
     ws["D8"] = f"Date:- {ref_date}"
-    ws["A8"].font = Font(name="Garamond", bold=True)
-    ws["D8"].font = Font(name="Garamond", bold=True)
+    ws["A8"].font = Font(name="Times New Roman", bold=True, italic=True)
+    ws["D8"].font = Font(name="Times New Roman", bold=True, italic=True)
     ws["D8"].alignment = Alignment(horizontal="right")
 
     headers = ["[Sl. No", "Description", "Qty", "Rate (₹)"]
     header_row = 10
     thin_border = Border(
-        left=Side(style='thin', color='000000'),
-        right=Side(style='thin', color='000000'),
-        top=Side(style='thin', color='000000'),
-        bottom=Side(style='thin', color='000000')
+        left=Side(style='thin', color='CBD5E1'),
+        right=Side(style='thin', color='CBD5E1'),
+        top=Side(style='thin', color='CBD5E1'),
+        bottom=Side(style='thin', color='CBD5E1')
     )
 
     for col_idx, h in enumerate(headers, 1):
         cell = ws.cell(row=header_row, column=col_idx, value=h)
-        cell.font = Font(name="Garamond", size=10, bold=True, color="FFFFFF")
-        cell.fill = PatternFill(start_color="222222", end_color="222222", fill_type="solid")
+        cell.font = Font(name="Times New Roman", size=10, bold=True, color="FFFFFF")
+        cell.fill = PatternFill(start_color="2D3748", end_color="2D3748", fill_type="solid")
         cell.alignment = Alignment(horizontal="center" if col_idx != 2 else "left")
 
     row_num = 11
@@ -334,12 +334,12 @@ def generate_lovely_quotation_excel(data: Dict[str, Any], output_path: str) -> s
 
         for c in range(1, 5):
             ws.cell(row=row_num, column=c).border = thin_border
-            ws.cell(row=row_num, column=c).font = Font(name="Garamond", size=10, bold=True)
+            ws.cell(row=row_num, column=c).font = Font(name="Times New Roman", size=10, bold=True)
         row_num += 1
 
     row_num += 1
-    ws.cell(row=row_num, column=1, value="Terms & Condition:\n1. GST@18% Extra\n2. For Destination\n3. Delivery within 30 days").font = Font(name="Garamond", size=9, italic=True)
-    ws.cell(row=row_num, column=4, value="LOVELY GENERAL ORDER SUPPLIER\nManish Kumar (Proprietor)").font = Font(name="Garamond", bold=True)
+    ws.cell(row=row_num, column=1, value="Terms & Condition:\n1. GST@18% Extra\n2. For Destination\n3. Delivery within 30 days").font = Font(name="Times New Roman", size=9, italic=True)
+    ws.cell(row=row_num, column=4, value="LOVELY GENERAL ORDER SUPPLIER\nManish Kumar (Proprietor)").font = Font(name="Times New Roman", bold=True)
     ws.cell(row=row_num, column=4).alignment = Alignment(horizontal="right")
 
     ws.column_dimensions['A'].width = 10
@@ -370,42 +370,42 @@ def generate_raju_quotation_excel(data: Dict[str, Any], output_path: str) -> str
 
     ws.merge_cells("A1:D1")
     ws["A1"] = "M/S RAJU ENGINEERING WORKS"
-    ws["A1"].font = Font(name="Verdana", size=15, bold=True, color="111827")
+    ws["A1"].font = Font(name="Courier New", size=15, bold=True, color="000000")
     ws["A1"].alignment = Alignment(horizontal="center")
 
     ws.merge_cells("A2:D2")
     ws["A2"] = "Railway Contractor | GSTIN: 10JRHPK4490P1Z8 | MSME: UDYAM-BR-22-4015162 | Mob: 8651757734"
-    ws["A2"].font = Font(name="Verdana", size=8, italic=True)
+    ws["A2"].font = Font(name="Courier New", size=8, italic=True)
     ws["A2"].alignment = Alignment(horizontal="center")
 
     ws["A4"] = f"REF.- {org_ref}"
     ws["D4"] = f"DATE:- {org_date}"
-    ws["A4"].font = Font(name="Verdana", bold=True)
-    ws["D4"].font = Font(name="Verdana", bold=True)
+    ws["A4"].font = Font(name="Courier New", bold=True)
+    ws["D4"].font = Font(name="Courier New", bold=True)
     ws["D4"].alignment = Alignment(horizontal="right")
 
     ws["A5"] = f"To.\n{consignee}"
-    ws["A5"].font = Font(name="Verdana", bold=True)
+    ws["A5"].font = Font(name="Courier New", bold=True)
 
     ws["A7"] = f"REF. No:- {ref_no}"
     ws["D7"] = f"DATE:- {ref_date}"
-    ws["A7"].font = Font(name="Verdana", bold=True)
-    ws["D7"].font = Font(name="Verdana", bold=True)
+    ws["A7"].font = Font(name="Courier New", bold=True)
+    ws["D7"].font = Font(name="Courier New", bold=True)
     ws["D7"].alignment = Alignment(horizontal="right")
 
-    headers = ["Sr. No", "DESCRIPTION", "QTY", "RATE (₹)"]
+    headers = ["SR. NO", "DESCRIPTION", "QTY", "RATE (₹)"]
     header_row = 9
-    thin_border = Border(
-        left=Side(style='thin', color='000000'),
-        right=Side(style='thin', color='000000'),
-        top=Side(style='thin', color='000000'),
-        bottom=Side(style='thin', color='000000')
+    thick_border = Border(
+        left=Side(style='medium', color='000000'),
+        right=Side(style='medium', color='000000'),
+        top=Side(style='medium', color='000000'),
+        bottom=Side(style='medium', color='000000')
     )
 
     for col_idx, h in enumerate(headers, 1):
         cell = ws.cell(row=header_row, column=col_idx, value=h)
-        cell.font = Font(name="Verdana", size=9, bold=True, color="FFFFFF")
-        cell.fill = PatternFill(start_color="111827", end_color="111827", fill_type="solid")
+        cell.font = Font(name="Courier New", size=9, bold=True, color="FFFFFF")
+        cell.fill = PatternFill(start_color="000000", end_color="000000", fill_type="solid")
         cell.alignment = Alignment(horizontal="center" if col_idx != 2 else "left")
 
     row_num = 10
@@ -422,13 +422,13 @@ def generate_raju_quotation_excel(data: Dict[str, Any], output_path: str) -> str
         ws.cell(row=row_num, column=4, value=float(rate_val) if rate_val else 0).alignment = Alignment(horizontal="right")
 
         for c in range(1, 5):
-            ws.cell(row=row_num, column=c).border = thin_border
-            ws.cell(row=row_num, column=c).font = Font(name="Verdana", size=9, bold=True)
+            ws.cell(row=row_num, column=c).border = thick_border
+            ws.cell(row=row_num, column=c).font = Font(name="Courier New", size=9, bold=True)
         row_num += 1
 
     row_num += 1
-    ws.cell(row=row_num, column=1, value="(1) GST@18% Extra\n(2) For Destination\n(3) Delivery within 30 days\n(4) Inspection by consignees\n(5) Payment 100% against CRN").font = Font(name="Verdana", size=8, bold=True)
-    ws.cell(row=row_num, column=4, value="M/S RAJU ENGINEERING WORKS\n\nProprietor").font = Font(name="Verdana", bold=True)
+    ws.cell(row=row_num, column=1, value="(1) GST@18% Extra\n(2) For Destination\n(3) Delivery within 30 days\n(4) Inspection by consignees\n(5) Payment 100% against CRN").font = Font(name="Courier New", size=8, bold=True)
+    ws.cell(row=row_num, column=4, value="M/S RAJU ENGINEERING WORKS\n\nProprietor").font = Font(name="Courier New", bold=True)
     ws.cell(row=row_num, column=4).alignment = Alignment(horizontal="right")
 
     ws.column_dimensions['A'].width = 10
