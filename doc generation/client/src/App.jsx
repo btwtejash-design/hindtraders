@@ -7,9 +7,7 @@ import QuotationGenerator from './components/QuotationGenerator';
 import TaxInvoicePreview from './components/previews/TaxInvoicePreview';
 import ChallanPreview from './components/previews/ChallanPreview';
 import GcPreview from './components/previews/GcPreview';
-import WebsiteHome from './components/WebsiteHome';
-import PasswordLockScreen from './components/PasswordLockScreen';
-import { FileText, Truck, ShieldCheck, Download, Printer, CheckCircle, FileCode, Lock, ArrowLeft } from 'lucide-react';
+import { FileText, Truck, ShieldCheck, Download, Printer, CheckCircle, FileCode } from 'lucide-react';
 
 const getApiBase = () => {
   if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
@@ -24,10 +22,6 @@ const getApiBase = () => {
 const API_BASE = getApiBase();
 
 export default function App() {
-  const [viewBranch, setViewBranch] = useState('website'); // 'website' | 'doc-generation'
-  const [isUnlocked, setIsUnlocked] = useState(() => {
-    return sessionStorage.getItem('ht_unlocked') === 'true';
-  });
   const [activeMode, setActiveMode] = useState('quotations'); // 'quotations' | 'po'
   const [poData, setPoData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,12 +29,7 @@ export default function App() {
   const [statusMsg, setStatusMsg] = useState('');
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const queryParams = new URLSearchParams(window.location.search);
-      if (queryParams.get('portal') === 'true' || window.location.hash.includes('doc-generation')) {
-        setViewBranch('doc-generation');
-      }
-    }
+    // Start empty on app load as requested
   }, []);
 
   const loadSampleData = async () => {
@@ -166,7 +155,7 @@ export default function App() {
         data.crn_date = '';
 
         setPoData(data);
-        setStatusMsg(`Successfully extracted PO #${data.po_number || ''}!`);
+        setStatusMsg(`Successfully extracted and saved data from ${file.name}!`);
       } else {
         const errJson = await res.json();
         alert(`Parsing error: ${errJson.detail}`);
@@ -178,10 +167,10 @@ export default function App() {
     }
   };
 
-  const downloadBackendFile = async (endpointSuffix, filename) => {
+  const downloadBackendFile = async (endpoint, defaultFilename) => {
     if (!poData) return;
     try {
-      const res = await fetch(`${API_BASE}/generate/${endpointSuffix}`, {
+      const res = await fetch(`${API_BASE}/generate/${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(poData)
@@ -191,37 +180,20 @@ export default function App() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = filename;
+        a.download = defaultFilename;
         a.click();
         window.URL.revokeObjectURL(url);
       } else {
-        alert(`Failed to generate file: ${endpointSuffix}`);
+        alert('Error generating document on server');
       }
     } catch (err) {
-      alert(`Network error generating ${endpointSuffix}: ${err.message}`);
+      alert(`Failed to download document: ${err.message}`);
     }
   };
 
   const exportAllPdfBundle = async () => {
     if (!poData) return;
-    try {
-      const res = await fetch(`${API_BASE}/generate/all-pdf-bundle`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(poData)
-      });
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `PO_${poData.po_number}_Documents.zip`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      }
-    } catch (err) {
-      alert(`Export bundle error: ${err.message}`);
-    }
+    await downloadBackendFile('bundle-pdf', `Documents_Bundle_PO_${poData.po_number}.zip`);
   };
 
   const exportQuotationBundle = async () => {
@@ -254,80 +226,8 @@ export default function App() {
     window.print();
   };
 
-  if (viewBranch === 'website') {
-    return <WebsiteHome onGoToPortal={() => setViewBranch('doc-generation')} />;
-  }
-
-  if (!isUnlocked) {
-    return (
-      <PasswordLockScreen
-        onUnlock={() => setIsUnlocked(true)}
-        onBackToWebsite={() => setViewBranch('website')}
-      />
-    );
-  }
-
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div className="no-print" style={{
-        background: '#020617',
-        borderBottom: '1px solid #1e293b',
-        padding: '0.5rem 1.5rem',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '0.5rem'
-      }}>
-        <button
-          type="button"
-          onClick={() => setViewBranch('website')}
-          style={{
-            background: 'transparent',
-            border: '1px solid #334155',
-            color: '#cbd5e1',
-            padding: '0.4rem 0.85rem',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '0.82rem',
-            fontWeight: 600,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.4rem'
-          }}
-        >
-          <ArrowLeft size={15} /> Back to Website
-        </button>
-
-        <div style={{ color: '#fff', fontSize: '0.88rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <ShieldCheck size={18} color="#10b981" />
-          <span>Hind Traders Portal • Document & Quotation Branch (Unlocked)</span>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            sessionStorage.removeItem('ht_unlocked');
-            setIsUnlocked(false);
-          }}
-          style={{
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            color: '#ef4444',
-            padding: '0.4rem 0.85rem',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '0.82rem',
-            fontWeight: 600,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.4rem'
-          }}
-        >
-          <Lock size={14} /> Lock Portal
-        </button>
-      </div>
-
       <Navbar
         onLoadSample={loadSampleData}
         onExportAll={exportAllPdfBundle}
