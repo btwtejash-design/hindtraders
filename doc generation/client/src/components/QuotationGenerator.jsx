@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Sparkles, Plus, Trash2, Download, Eye, FileText, CheckCircle, Save, FolderOpen, FileCode, ArrowRightLeft } from 'lucide-react';
+import { Upload, Sparkles, Plus, Trash2, Download, Eye, FileText, CheckCircle, Save, FolderOpen, FileCode, ArrowRightLeft, Zap } from 'lucide-react';
 import HindQuotationPreview from './previews/HindQuotationPreview';
 import YashaQuotationPreview from './previews/YashaQuotationPreview';
 import MadhuQuotationPreview from './previews/MadhuQuotationPreview';
@@ -76,6 +76,8 @@ export default function QuotationGenerator({ poData }) {
     rates: { 1: '85', 2: '90', 3: '95', 4: '105', 5: '120', 6: '160', 7: '20', 8: '22', 9: '40', 10: '55' }
   });
 
+  const [lowestOrgKey, setLowestOrgKey] = useState('hind'); // 'hind' | 'yasha' | 'madhu' | 'lovely' | 'raju'
+
   useEffect(() => {
     fetchSavedQuotationRecords();
   }, []);
@@ -90,6 +92,72 @@ export default function QuotationGenerator({ poData }) {
     } catch (err) {
       console.warn("Could not fetch saved quotation records:", err);
     }
+  };
+
+  // Auto-Set Lowest Organization (L1) and generate higher rates for other 4 orgs (+₹2 to +₹20)
+  const handleAutoSetLowestOrg = (targetL1Key = lowestOrgKey, currentItems = commonData.items) => {
+    const orgKeys = ['hind', 'yasha', 'madhu', 'lovely', 'raju'];
+    const orgLabels = {
+      hind: 'Hind Traders',
+      yasha: 'Yasha Enterprises',
+      madhu: 'Madhu Enterprises',
+      lovely: 'Lovely General Order Supplier',
+      raju: 'Raju Engineering Works'
+    };
+
+    const currentStates = {
+      hind: hindData,
+      yasha: yashaData,
+      madhu: madhuData,
+      lovely: lovelyData,
+      raju: rajuData
+    };
+
+    const setters = {
+      hind: setHindData,
+      yasha: setYashaData,
+      madhu: setMadhuData,
+      lovely: setLovelyData,
+      raju: setRajuData
+    };
+
+    const l1State = currentStates[targetL1Key];
+    const items = currentItems || [];
+
+    const newRatesMap = {
+      hind: {},
+      yasha: {},
+      madhu: {},
+      lovely: {},
+      raju: {}
+    };
+
+    items.forEach((item, idx) => {
+      const sr = item.sr_no || (idx + 1);
+      const rawVal = l1State.rates[sr] || l1State.rates[String(sr)] || item.rate;
+      let baseRate = Math.round(Number(rawVal));
+      if (isNaN(baseRate) || baseRate <= 0) {
+        baseRate = 20 + (idx * 5);
+      }
+
+      newRatesMap[targetL1Key][sr] = String(baseRate);
+
+      orgKeys.forEach((key) => {
+        if (key !== targetL1Key) {
+          const increment = Math.floor(Math.random() * 19) + 2; // integer 2 to 20
+          newRatesMap[key][sr] = String(baseRate + increment);
+        }
+      });
+    });
+
+    orgKeys.forEach((key) => {
+      setters[key](prev => ({
+        ...prev,
+        rates: newRatesMap[key]
+      }));
+    });
+
+    setStatusMsg(`Set "${orgLabels[targetL1Key]}" as Lowest (L1)! Other 4 organization rates auto-calculated +₹2 to +₹20 higher per item (no decimals).`);
   };
 
   // Import items from currently active PO if available
@@ -109,25 +177,7 @@ export default function QuotationGenerator({ poData }) {
       items: poItems
     });
 
-    const newRatesHind = {};
-    const newRatesYasha = {};
-    const newRatesMadhu = {};
-    const newRatesLovely = {};
-    const newRatesRaju = {};
-    poItems.forEach((item) => {
-      newRatesHind[item.sr_no] = item.rate ? String(item.rate) : '25';
-      newRatesYasha[item.sr_no] = item.rate ? String(Math.round(item.rate * 0.9)) : '20';
-      newRatesMadhu[item.sr_no] = item.rate ? String(Math.round(item.rate * 1.1)) : '30';
-      newRatesLovely[item.sr_no] = item.rate ? String(Math.round(item.rate * 1.05)) : '28';
-      newRatesRaju[item.sr_no] = item.rate ? String(Math.round(item.rate * 0.95)) : '22';
-    });
-
-    setHindData(prev => ({ ...prev, rates: newRatesHind }));
-    setYashaData(prev => ({ ...prev, rates: newRatesYasha }));
-    setMadhuData(prev => ({ ...prev, rates: newRatesMadhu }));
-    setLovelyData(prev => ({ ...prev, rates: newRatesLovely }));
-    setRajuData(prev => ({ ...prev, rates: newRatesRaju }));
-    setStatusMsg(`Successfully imported ${poItems.length} items from active PO #${poData.po_number}!`);
+    handleAutoSetLowestOrg(lowestOrgKey, poItems);
   };
 
   // Save Quotation Draft
@@ -207,35 +257,17 @@ export default function QuotationGenerator({ poData }) {
 
       if (res.ok) {
         const parsed = await res.json();
+        const parsedItems = parsed.items || [];
+
         setCommonData({
           ref_no: parsed.ref_no || 'F/DPS/MMC(D)/27',
           ref_date: parsed.ref_date || new Date().toLocaleDateString('en-GB'),
           consignee_address: parsed.consignee_address || 'AWM (WHEEL)\nEASTERN RLY, JAMALPUR',
-          items: parsed.items || []
+          items: parsedItems
         });
 
-        // Initialize rates if needed
-        const newRatesHind = {};
-        const newRatesYasha = {};
-        const newRatesMadhu = {};
-        const newRatesLovely = {};
-        const newRatesRaju = {};
-        (parsed.items || []).forEach((item, idx) => {
-          const sr = item.sr_no || (idx + 1);
-          newRatesHind[sr] = '25';
-          newRatesYasha[sr] = '20';
-          newRatesMadhu[sr] = '30';
-          newRatesLovely[sr] = '28';
-          newRatesRaju[sr] = '22';
-        });
-
-        setHindData(prev => ({ ...prev, rates: { ...newRatesHind, ...prev.rates } }));
-        setYashaData(prev => ({ ...prev, rates: { ...newRatesYasha, ...prev.rates } }));
-        setMadhuData(prev => ({ ...prev, rates: { ...newRatesMadhu, ...prev.rates } }));
-        setLovelyData(prev => ({ ...prev, rates: { ...newRatesLovely, ...prev.rates } }));
-        setRajuData(prev => ({ ...prev, rates: { ...newRatesRaju, ...prev.rates } }));
-
-        setStatusMsg(`Successfully extracted ${parsed.items?.length || 0} items from ${file.name}!`);
+        handleAutoSetLowestOrg(lowestOrgKey, parsedItems);
+        setStatusMsg(`Successfully extracted ${parsedItems.length} items from ${file.name}! L1 rates auto-configured.`);
       } else {
         const errJson = await res.json();
         alert(`AI Parsing error: ${errJson.detail || 'Could not parse file'}`);
@@ -593,6 +625,71 @@ export default function QuotationGenerator({ poData }) {
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc' }}>
                 Organization Rates & Quotation Details
               </h3>
+            </div>
+
+            {/* L1 LOWEST BIDDER CONTROLS */}
+            <div style={{
+              background: 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)',
+              border: '1.5px solid #6366f1',
+              borderRadius: '10px',
+              padding: '1.1rem 1.25rem',
+              marginBottom: '1.25rem',
+              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.15)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                  <h4 style={{ margin: 0, color: '#a5b4fc', fontSize: '1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Sparkles size={18} color="#fbbf24" /> Select Lowest Organization (L1 Rates)
+                  </h4>
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.4 }}>
+                    Choose winning L1 organization. Other 4 orgs will be auto-calculated <strong>₹2 to ₹20 higher per item</strong> (integers only, no decimals).
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <select
+                    value={lowestOrgKey}
+                    onChange={(e) => {
+                      setLowestOrgKey(e.target.value);
+                      handleAutoSetLowestOrg(e.target.value);
+                    }}
+                    style={{
+                      background: '#0f172a',
+                      color: '#f8fafc',
+                      border: '1.5px solid #6366f1',
+                      borderRadius: '6px',
+                      padding: '0.5rem 0.85rem',
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="hind">1. Hind Traders (L1)</option>
+                    <option value="yasha">2. Yasha Enterprises (L1)</option>
+                    <option value="madhu">3. Madhu Enterprises (L1)</option>
+                    <option value="lovely">4. Lovely Supplier (L1)</option>
+                    <option value="raju">5. Raju Engineering (L1)</option>
+                  </select>
+
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => handleAutoSetLowestOrg(lowestOrgKey)}
+                    style={{
+                      fontSize: '0.85rem',
+                      padding: '0.5rem 1rem',
+                      background: '#6366f1',
+                      borderColor: '#4f46e5',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      fontWeight: 700
+                    }}
+                  >
+                    <Zap size={16} /> Re-Calculate L1 (+₹2 to +₹20)
+                  </button>
+                </div>
+              </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>

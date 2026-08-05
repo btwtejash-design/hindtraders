@@ -30,21 +30,22 @@ def normalize_text(text: str) -> str:
 def parse_quotation_input_file(file_path: str, mime_type: str = None) -> Dict[str, Any]:
     """
     Parses an uploaded PDF or image file containing a tender, enquiry, or document,
-    using Gemini AI to extract reference details and material items.
+    using Gemini AI if configured, with an enhanced local PDF text parser fallback.
     """
     # 1. Try Gemini AI
-    ai_data = parse_quotation_with_gemini(file_path, mime_type)
-    if ai_data:
-        logger.info(f"Successfully extracted {len(ai_data.get('items', []))} quotation items using Gemini API")
-        return ai_data
+    if GEMINI_API_KEY:
+        ai_data = parse_quotation_with_gemini(file_path, mime_type)
+        if ai_data and len(ai_data.get('items', [])) > 0:
+            logger.info(f"Successfully extracted {len(ai_data.get('items', []))} quotation items using Gemini API")
+            return ai_data
 
     # 2. Local Fallback for PDFs
     if file_path.lower().endswith(".pdf"):
-        logger.info("Falling back to local PDF parser for quotation data")
+        logger.info("Using enhanced local PDF parser for quotation data")
         return parse_quotation_local_pdf(file_path)
 
-    # 3. Default fallback for images if AI fails
-    logger.info("Falling back to default 10-particular quotation structure")
+    # 3. Fallback for image files if AI key is missing or fails
+    logger.info("Using default quotation structure")
     return get_default_quotation_data()
 
 def parse_quotation_with_gemini(file_path: str, mime_type: str = None) -> Dict[str, Any]:
@@ -62,17 +63,14 @@ def parse_quotation_with_gemini(file_path: str, mime_type: str = None) -> Dict[s
         ext = os.path.splitext(file_path)[1].lower()
 
         if ext == ".pdf":
-            # Extract text first
             reader = pypdf.PdfReader(file_path)
             extracted_text = normalize_text("\n".join([page.extract_text() or "" for page in reader.pages]))
-            contents.append(f"Document Text:\n{extracted_text}\n")
+            contents.append(f"Document Raw Text:\n{extracted_text}\n")
             
-            # Also pass raw bytes if mime type is pdf
             with open(file_path, "rb") as f:
                 pdf_bytes = f.read()
             contents.append(types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"))
         else:
-            # Image file
             if not mime_type:
                 if ext in [".jpg", ".jpeg"]:
                     mime_type = "image/jpeg"
@@ -88,38 +86,38 @@ def parse_quotation_with_gemini(file_path: str, mime_type: str = None) -> Dict[s
             contents.append(types.Part.from_bytes(data=img_bytes, mime_type=mime_type))
 
         prompt = """
-You are an expert document and image parser for Indian Railways / IREPS enquiry documents, tenders, purchase orders, and quotation requests.
-Analyze the provided document or image carefully and extract the following details into a JSON object:
+You are an expert AI parser for Indian Railways / IREPS enquiry documents, tenders, purchase orders, and quotation requests.
+Analyze the provided document or image carefully and extract all reference numbers, address, and material particulars/items into a JSON object.
 
 JSON Schema:
 {
   "ref_no": "string (Reference / Enquiry / PO Number e.g. F/DPS/MMC(D)/27 or 55265692101304)",
   "ref_date": "string in DD/MM/YYYY format (Reference Date e.g. 28/04/2026)",
-  "consignee_address": "string (Recipient address e.g. AWM (WHEEL)\\nEASTERN RLY, JAMALPUR or Sr. DME, EASTERN RAILWAY MALDA)",
+  "consignee_address": "string (Recipient address e.g. AWM (WHEEL)\\nEASTERN RLY, JAMALPUR or Dy, CMT EASTERN RLY. JAMALPUR)",
   "items": [
     {
       "sr_no": 1,
-      "description": "string (Full item description / specification)",
-      "unit": "string (e.g. mtr, Nos, Set, Kg, Pc)",
-      "quantity": 1
+      "description": "string (Exact item description & technical specification as printed in document)",
+      "unit": "string (e.g. mtr, Nos, Set, Kg, Pc, NO)",
+      "quantity": 1,
+      "rate": 100.0
     }
   ]
 }
 
-CRITICAL GUIDELINES:
-1. "ref_no" should capture any reference letter number, tender number, or file number.
-2. "ref_date" should be extracted and formatted as DD/MM/YYYY.
-3. "consignee_address" should include recipient designation, workshop/railway division, and station.
-4. Extract ALL material items listed in the document. Pay close attention to tabular data. IT IS MANDATORY TO EXTRACT EVERY SINGLE ROW/ITEM. DO NOT MISS ANY ROW.
-5. Count all rows in the image/PDF table from top to bottom. If there are 10 particulars/items, extract ALL 10 of them into the "items" list. DO NOT TRUNCATE AT 3 ITEMS OR ANY LOWER NUMBER.
-6. Set "quantity" to numeric value (default to 1 if not explicitly specified) and unit (e.g., mtr, Nos, Set, Kg).
-7. Return STRICTLY valid JSON matching the schema above without markdown formatting wrappers.
+CRITICAL RULES:
+1. Extract EVERY SINGLE material item listed in the document table. Do NOT omit, skip, or summarize any item row.
+2. Count all rows from top to bottom. If there are 3 items, return 3. If there are 10 items, return all 10.
+3. Clean the "description" field so it contains only the actual item specification (do not include table header words like "Description" or "Sl. No").
+4. "unit" should be extracted (e.g., mtr, Nos, Set, Kg, Pc, NO). Default to "Nos" if missing.
+5. "quantity" should be numeric. Default to 1 if missing.
+6. Return ONLY raw valid JSON matching the schema above without markdown formatting codeblocks.
 """
         contents.append(prompt)
 
         models = [GEMINI_MODEL_NAME, "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-2.0-flash-exp"]
         for model_id in models:
-            for attempt in range(3):
+            for attempt in range(2):
                 try:
                     response = client.models.generate_content(
                         model=model_id,
@@ -133,16 +131,18 @@ CRITICAL GUIDELINES:
                         clean_text = response.text.strip()
                         if clean_text.startswith("```json"):
                             clean_text = clean_text[7:]
+                        if clean_text.startswith("```"):
+                            clean_text = clean_text[3:]
                         if clean_text.endswith("```"):
                             clean_text = clean_text[:-3]
+                        clean_text = clean_text.strip()
                         parsed = json.loads(clean_text)
                         if isinstance(parsed, dict) and "items" in parsed and len(parsed["items"]) > 0:
                             return format_parsed_quotation_data(parsed)
                 except Exception as e:
-                    err_str = str(e)
                     logger.warning(f"Gemini model {model_id} attempt {attempt+1} failed: {e}")
-                    if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                        time.sleep(3)
+                    if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                        time.sleep(2)
                         continue
                     break
 
@@ -156,38 +156,98 @@ def parse_quotation_local_pdf(file_path: str) -> Dict[str, Any]:
         reader = pypdf.PdfReader(file_path)
         text = normalize_text("\n".join([page.extract_text() or "" for page in reader.pages]))
         
+        # 1. Extract Ref No
         ref_no = ""
-        ref_match = re.search(r'Ref(?:\.|erence)?\s*(?:No\.?)?\s*[:\-]?\s*([A-Za-z0-9_/(\)\-]+)', text, re.IGNORECASE)
-        if ref_match:
+        ref_match = re.search(r'(?:Ref|REF|Enquiry|Tender|PO)\.?\s*(?:No|NO)?\.?\s*[:\-]?\s*([A-Za-z0-9_/(\)\-]+)', text)
+        if ref_match and len(ref_match.group(1).strip()) > 2:
             ref_no = ref_match.group(1).strip()
         else:
             ref_no = "F/DPS/MMC(D)/27"
 
+        # 2. Extract Date
         ref_date = "28/04/2026"
         date_match = re.search(r'Date[d]?\s*[:\-]?\s*([0-9]{1,2}[-/\.][0-9]{1,2}[-/\.][0-9]{2,4})', text, re.IGNORECASE)
         if date_match:
             ref_date = date_match.group(1).strip()
 
+        # 3. Extract Recipient / Consignee Address
         consignee = "AWM (WHEEL)\nEASTERN RLY, JAMALPUR"
-        if "MALDA" in text:
+        if "MALDA" in text.upper():
             consignee = "Sr. DME,\nEASTERN RAILWAY\nMALDA"
-        elif "DIESEL" in text:
+        elif "DIESEL" in text.upper():
             consignee = "AWM (DIESEL)\nEASTERN RLY, JAMALPUR"
+        elif "CMT" in text.upper():
+            consignee = "Dy, CMT\nEASTERN RLY. JAMALPUR"
 
+        # 4. Extract Material Items / Particulars
         items = []
         lines = [l.strip() for l in text.split('\n') if l.strip()]
-        sr = 1
+
+        # Ignore lines matching common non-item metadata
+        ignore_keywords = [
+            'gstin', 'vender code', 'vendor code', 'mob', 'phone', 'email', 'budgetary quotation',
+            'terms & condition', 'terms and conditions', 'delivery within', 'for destination',
+            'gst@', 'inspection by', 'payment 100%', 'proprietor', 'contractor', 'sl. no',
+            'sr. no', 'description', 'particulars', 'qty', 'rate', 'unit', 'amount'
+        ]
+
+        unit_regex = re.compile(r'\b(mtr|metres?|nos?|sets?|kgs?|pcs?|pairs?|pkts?|ltrs?|box|dozen|roll|mm)\b', re.IGNORECASE)
+
+        sr_counter = 1
         for line in lines:
-            if re.match(r'^\d+[\.\)]', line) or any(k in line.lower() for k in ['tube', 'washer', 'spring', 'insulator', 'screw', 'bolt', 'pin', 'gasket', 'plate', 'ring', 'bush', 'seal', 'hose', 'pipe', 'valve']):
-                clean_desc = re.sub(r'^\d+[\.\)]\s*', '', line).strip()
-                if len(clean_desc) > 3:
+            line_lower = line.lower()
+            if any(kw in line_lower for kw in ignore_keywords):
+                continue
+            if len(line) < 4:
+                continue
+
+            # Check if line starts with index e.g., "1.", "1)", "1 ", "[1]"
+            idx_match = re.match(r'^(?:\[?\s*(\d{1,3})\s*\]?[\.\)\-]?|\(\d{1,3}\))\s*(.+)', line)
+            has_unit = bool(unit_regex.search(line))
+
+            if idx_match or has_unit:
+                raw_desc = idx_match.group(2) if idx_match else line
+                
+                # Clean description
+                clean_desc = re.sub(r'^(?:Description|Particulars|Item)\s*[:\-]?\s*', '', raw_desc, flags=re.IGNORECASE).strip()
+                clean_desc = re.sub(r'\s+Rs\.?\s*\d+.*$', '', clean_desc, flags=re.IGNORECASE).strip()
+                clean_desc = re.sub(r'\s+₹\s*\d+.*$', '', clean_desc).strip()
+
+                # Extract unit if found
+                unit_found = "Nos"
+                unit_m = unit_regex.search(clean_desc)
+                if unit_m:
+                    found_str = unit_m.group(1)
+                    if found_str.lower() in ['mtr', 'meter', 'metres']:
+                        unit_found = "mtr"
+                    elif found_str.lower() in ['set', 'sets']:
+                        unit_found = "Set"
+                    elif found_str.lower() in ['kg', 'kgs']:
+                        unit_found = "Kg"
+                    elif found_str.lower() in ['pc', 'pcs']:
+                        unit_found = "Pc"
+                    elif found_str.lower() in ['no', 'nos']:
+                        unit_found = "Nos"
+                    else:
+                        unit_found = found_str
+
+                # Extract quantity if specified e.g. "1 Nos", "10 mtr"
+                qty_found = 1
+                qty_m = re.search(r'(\d+(?:\.\d+)?)\s*(?:mtr|nos|set|kg|pc|no|meter)\b', line, re.IGNORECASE)
+                if qty_m:
+                    try:
+                        qty_found = float(qty_m.group(1))
+                    except ValueError:
+                        qty_found = 1
+
+                if len(clean_desc) > 3 and not clean_desc.isdigit():
                     items.append({
-                        "sr_no": sr,
+                        "sr_no": sr_counter,
                         "description": clean_desc,
-                        "unit": "mtr" if "tube" in line.lower() else "Nos",
-                        "quantity": 1
+                        "unit": unit_found,
+                        "quantity": int(qty_found) if float(qty_found).is_integer() else qty_found
                     })
-                    sr += 1
+                    sr_counter += 1
 
         if not items:
             items = get_default_quotation_data()["items"]
@@ -206,12 +266,27 @@ def format_parsed_quotation_data(parsed: Dict[str, Any]) -> Dict[str, Any]:
     items = []
     raw_items = parsed.get("items", [])
     for idx, item in enumerate(raw_items, 1):
+        desc = str(item.get("description", "")).strip()
+        # Clean off leading numbers e.g. "1. Heat Shrink..." -> "Heat Shrink..."
+        desc = re.sub(r'^\d+[\.\)]\s*', '', desc).strip()
+
+        qty_val = item.get("quantity")
+        qty_num = 1
+        if qty_val is not None:
+            try:
+                qty_num = float(qty_val)
+                if qty_num <= 0:
+                    qty_num = 1
+            except (ValueError, TypeError):
+                qty_num = 1
+
         items.append({
             "sr_no": item.get("sr_no", idx),
-            "description": str(item.get("description", "")).strip(),
-            "unit": str(item.get("unit", "mtr")).strip(),
-            "quantity": float(item.get("quantity", 1)) if item.get("quantity") is not None else 1.0
+            "description": desc or f"Material Item #{idx}",
+            "unit": str(item.get("unit", "Nos")).strip(),
+            "quantity": int(qty_num) if float(qty_num).is_integer() else qty_num
         })
+
     if not items:
         items = get_default_quotation_data()["items"]
 
@@ -290,4 +365,3 @@ def get_default_quotation_data() -> Dict[str, Any]:
             }
         ]
     }
-
