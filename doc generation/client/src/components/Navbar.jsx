@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Sparkles, Download, Printer, FileSpreadsheet } from 'lucide-react';
+import { FileText, Sparkles, Download, Printer, FileSpreadsheet, Globe } from 'lucide-react';
 
 export default function Navbar({
   onLoadSample,
@@ -75,6 +75,15 @@ export default function Navbar({
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <a
+          href="/"
+          className="btn btn-outline"
+          style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', color: '#94a3b8', borderColor: '#334155', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+          title="Return to Official Hind Traders Homepage"
+        >
+          <Globe size={14} /> Official Website
+        </a>
+
         {activeMode === 'po' ? (
           <>
             <button className="btn btn-outline" onClick={onLoadSample} style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}>

@@ -99,24 +99,6 @@ if os.path.exists(SAMPLE_DIR):
 
 SAMPLE_PO_PATH = os.path.join(SAMPLE_DIR, "55265692101304.pdf")
 
-@app.get("/")
-def root():
-    index_path = os.path.join(BASE_DIR, "client", "dist", "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return {
-        "status": "ok",
-        "service": "IREPS Document Generation System",
-        "version": "2.0.0",
-        "documentation": "http://127.0.0.1:8000/docs",
-        "endpoints": {
-            "health": "/api/health",
-            "sample_data": "/api/sample-data",
-            "parse_po": "/api/parse-po",
-            "records": "/api/records"
-        }
-    }
-
 @app.get("/api/health")
 def health_check():
     return {"status": "ok", "message": "IREPS Document Generation Service Running v2.0"}
@@ -501,20 +483,56 @@ def generate_quotation_bundle_endpoint(data: Dict[str, Any] = Body(...)):
 
 # --- SERVE FRONTEND STATIC FILES & SPA FALLBACK ---
 
+ROOT_DIR = os.path.abspath(os.path.join(BASE_DIR, ".."))
 DIST_DIR = os.path.join(BASE_DIR, "client", "dist")
+
 if os.path.exists(DIST_DIR):
     assets_dir = os.path.join(DIST_DIR, "assets")
     if os.path.exists(assets_dir):
         app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
-    @app.get("/{full_path:path}")
-    async def serve_frontend(full_path: str):
-        if full_path.startswith("api/") or full_path == "api":
-            raise HTTPException(status_code=404, detail="API endpoint not found")
-        file_path = os.path.join(DIST_DIR, full_path)
-        if full_path and os.path.isfile(file_path):
-            return FileResponse(file_path)
-        return FileResponse(os.path.join(DIST_DIR, "index.html"))
+@app.get("/")
+async def serve_root():
+    root_index = os.path.join(ROOT_DIR, "index.html")
+    if os.path.exists(root_index):
+        return FileResponse(root_index)
+    dist_index = os.path.join(DIST_DIR, "index.html")
+    if os.path.exists(dist_index):
+        return FileResponse(dist_index)
+    return {"status": "ok", "service": "Hind Traders Official Site"}
+
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    if full_path.startswith("api/") or full_path == "api":
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+
+    # 1. Root path '/index.html' -> serve official Hind Traders website (index.html in root)
+    if full_path in ["", "index.html"]:
+        root_index = os.path.join(ROOT_DIR, "index.html")
+        if os.path.exists(root_index):
+            return FileResponse(root_index)
+
+    # 2. Files existing in root folder (e.g., catalog.html)
+    root_file = os.path.join(ROOT_DIR, full_path)
+    if full_path and os.path.isfile(root_file):
+        return FileResponse(root_file)
+
+    # 3. Files existing in client/dist (React static assets)
+    if os.path.exists(DIST_DIR):
+        dist_file = os.path.join(DIST_DIR, full_path)
+        if full_path and os.path.isfile(dist_file):
+            return FileResponse(dist_file)
+
+        # 4. Doc generation SPA routes (/documents, /portal, etc.) -> serve React SPA index.html
+        dist_index = os.path.join(DIST_DIR, "index.html")
+        if os.path.exists(dist_index):
+            return FileResponse(dist_index)
+
+    # 5. Fallback to root official website
+    root_index = os.path.join(ROOT_DIR, "index.html")
+    if os.path.exists(root_index):
+        return FileResponse(root_index)
+    raise HTTPException(status_code=404, detail="Page not found")
 
 
 if __name__ == "__main__":
