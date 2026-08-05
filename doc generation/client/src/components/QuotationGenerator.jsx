@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Sparkles, Plus, Trash2, Download, Eye, FileText, CheckCircle, Save, FolderOpen, FileCode, ArrowRightLeft, Zap } from 'lucide-react';
+import { Upload, Sparkles, Plus, Trash2, Download, Eye, FileText, CheckCircle, Save, FolderOpen, FileCode, ArrowRightLeft, Zap, FilePlus, Tag, X, Clock } from 'lucide-react';
 import HindQuotationPreview from './previews/HindQuotationPreview';
 import YashaQuotationPreview from './previews/YashaQuotationPreview';
 import MadhuQuotationPreview from './previews/MadhuQuotationPreview';
@@ -66,6 +66,11 @@ export default function QuotationGenerator({ poData }) {
   });
 
   const [lowestOrgKey, setLowestOrgKey] = useState('hind'); // 'hind' | 'yasha' | 'madhu' | 'lovely' | 'raju'
+
+  // Multi-Draft System States
+  const [currentDraftId, setCurrentDraftId] = useState(null);
+  const [draftTitle, setDraftTitle] = useState('');
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
   useEffect(() => {
     fetchSavedQuotationRecords();
@@ -169,10 +174,26 @@ export default function QuotationGenerator({ poData }) {
     handleAutoSetLowestOrg(lowestOrgKey, poItems);
   };
 
-  // Save Quotation Draft
-  const handleSaveQuotationDraft = async () => {
+  // Open Save Draft Modal
+  const openSaveDraftModal = () => {
+    if (!draftTitle) {
+      const defaultTitle = commonData.ref_no
+        ? `Quotation ${commonData.ref_no} (${commonData.items.length} items)`
+        : `Quotation Draft (${commonData.items.length} items)`;
+      setDraftTitle(defaultTitle);
+    }
+    setShowSaveModal(true);
+  };
+
+  // Execute Save Draft (Create New or Update Existing)
+  const executeSaveQuotationDraft = async (isUpdateExisting = false) => {
     setIsSaving(true);
+    const targetId = (isUpdateExisting && currentDraftId) ? currentDraftId : null;
+    const titleToUse = draftTitle.trim() || (commonData.ref_no ? `Quotation ${commonData.ref_no}` : 'Untitled Quotation Draft');
+
     const payload = {
+      id: targetId,
+      title: titleToUse,
       record_type: 'quotation',
       common: commonData,
       hind_traders: hindData,
@@ -190,7 +211,12 @@ export default function QuotationGenerator({ poData }) {
       });
 
       if (res.ok) {
-        setStatusMsg('Quotation draft saved successfully to database!');
+        const data = await res.json();
+        const savedRec = data.record;
+        setCurrentDraftId(savedRec.id);
+        setDraftTitle(savedRec.title || titleToUse);
+        setShowSaveModal(false);
+        setStatusMsg(`Saved draft "${savedRec.title || titleToUse}" successfully!`);
         fetchSavedQuotationRecords();
       } else {
         alert('Failed to save quotation draft.');
@@ -202,26 +228,49 @@ export default function QuotationGenerator({ poData }) {
     }
   };
 
-  // Load a Saved Quotation Record
+  // Load a Saved Quotation Draft
   const handleLoadSavedRecord = (rec) => {
+    setCurrentDraftId(rec.id);
+    setDraftTitle(rec.title || rec.common?.ref_no || '');
     if (rec.common) setCommonData(rec.common);
     if (rec.hind_traders) setHindData(rec.hind_traders);
     if (rec.yasha_enterprises) setYashaData(rec.yasha_enterprises);
     if (rec.madhu_enterprises) setMadhuData(rec.madhu_enterprises);
     if (rec.lovely_supplier) setLovelyData(rec.lovely_supplier);
     if (rec.raju_engineering_works) setRajuData(rec.raju_engineering_works);
-    setStatusMsg(`Loaded saved quotation record: ${rec.common?.ref_no || rec.id}`);
+    setStatusMsg(`Loaded saved draft: "${rec.title || rec.common?.ref_no || rec.id}"`);
+  };
+
+  // Start a Brand New Draft (Reset Form)
+  const handleStartNewDraft = () => {
+    setCurrentDraftId(null);
+    setDraftTitle('');
+    setCommonData({
+      ref_no: '',
+      ref_date: '',
+      consignee_address: '',
+      items: []
+    });
+    setHindData({ quotation_ref: 'HT/BQ/26-27', quotation_date: '03/08/2026', rates: {} });
+    setYashaData({ quotation_ref: 'YE/BQ/26-27', quotation_date: '04/08/2026', rates: {} });
+    setMadhuData({ quotation_ref: 'ME/12/26-27', quotation_date: '06/05/2026', rates: {} });
+    setLovelyData({ quotation_ref: 'LV/23/26-27', quotation_date: '29/04/2026', rates: {} });
+    setRajuData({ quotation_ref: 'REW/BQ/26-27', quotation_date: '02/06/2026', rates: {} });
+    setStatusMsg('Started a brand new quotation draft.');
   };
 
   // Delete a Saved Quotation Record
   const handleDeleteSavedRecord = async (recId, e) => {
     e.stopPropagation();
-    if (!window.confirm("Are you sure you want to delete this saved quotation?")) return;
+    if (!window.confirm("Are you sure you want to delete this saved quotation draft?")) return;
     try {
       const res = await fetch(`${API_BASE}/records/${recId}`, { method: 'DELETE' });
       if (res.ok) {
+        if (currentDraftId === recId) {
+          setCurrentDraftId(null);
+        }
         fetchSavedQuotationRecords();
-        setStatusMsg(`Deleted quotation record ${recId}`);
+        setStatusMsg(`Deleted quotation draft record.`);
       }
     } catch (err) {
       alert(`Delete error: ${err.message}`);
@@ -383,6 +432,15 @@ export default function QuotationGenerator({ poData }) {
           </div>
 
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              className="btn btn-outline"
+              onClick={handleStartNewDraft}
+              style={{ padding: '0.6rem 1rem', fontSize: '0.85rem' }}
+              title="Clear form and start a new quotation draft"
+            >
+              <FilePlus size={16} color="#10b981" /> + New Draft
+            </button>
+
             {poData && poData.items && poData.items.length > 0 && (
               <button
                 className="btn btn-secondary"
@@ -396,7 +454,7 @@ export default function QuotationGenerator({ poData }) {
 
             <button
               className="btn btn-outline"
-              onClick={handleSaveQuotationDraft}
+              onClick={openSaveDraftModal}
               disabled={isSaving}
               style={{ padding: '0.6rem 1rem', fontSize: '0.85rem' }}
             >
@@ -409,7 +467,7 @@ export default function QuotationGenerator({ poData }) {
                 onClick={() => setShowSavedList(!showSavedList)}
                 style={{ padding: '0.6rem 1rem', fontSize: '0.85rem' }}
               >
-                <FolderOpen size={16} color="#f59e0b" /> Saved ({savedRecords.length})
+                <FolderOpen size={16} color="#f59e0b" /> Saved Drafts ({savedRecords.length})
               </button>
             )}
 
@@ -427,7 +485,7 @@ export default function QuotationGenerator({ poData }) {
 
             <button
               className="btn btn-success"
-              onClick={() => handleDownloadDocument('bundle', `Quotations_Bundle_${commonData.ref_no.replace(/\//g, '_')}.zip`)}
+              onClick={() => handleDownloadDocument('bundle', `Quotations_Bundle_${(commonData.ref_no || 'Draft').replace(/\//g, '_')}.zip`)}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.1rem' }}
             >
               <Download size={18} />
@@ -436,50 +494,101 @@ export default function QuotationGenerator({ poData }) {
           </div>
         </div>
 
-        {statusMsg && (
-          <div style={{ marginTop: '0.75rem', background: '#0f172a', border: '1px solid #3b82f6', borderRadius: '6px', padding: '0.5rem 1rem', fontSize: '0.85rem', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <CheckCircle size={16} /> {statusMsg}
+        {/* Active Draft Badge & Status Bar */}
+        {(statusMsg || currentDraftId || draftTitle) && (
+          <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+            {draftTitle && (
+              <div style={{ background: '#1e1b4b', border: '1px solid #6366f1', borderRadius: '6px', padding: '0.4rem 0.8rem', fontSize: '0.82rem', color: '#a5b4fc', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}>
+                <Tag size={14} color="#fbbf24" /> Draft Title: <span style={{ color: '#fff' }}>{draftTitle}</span>
+              </div>
+            )}
+            {statusMsg && (
+              <div style={{ background: '#0f172a', border: '1px solid #3b82f6', borderRadius: '6px', padding: '0.4rem 0.8rem', fontSize: '0.82rem', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <CheckCircle size={15} /> {statusMsg}
+              </div>
+            )}
           </div>
         )}
 
         {/* Saved Records Drawer / Card */}
         {showSavedList && savedRecords.length > 0 && (
-          <div style={{ marginTop: '1rem', background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '1rem' }}>
-            <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.95rem', color: '#f8fafc' }}>
-              Saved Quotation Records Archive
-            </h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
-              {savedRecords.map((rec) => (
-                <div
-                  key={rec.id}
-                  onClick={() => handleLoadSavedRecord(rec)}
-                  style={{
-                    background: '#1e293b',
-                    border: '1px solid #334155',
-                    borderRadius: '6px',
-                    padding: '0.75rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    justify: 'space-between',
-                    alignItems: 'center'
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: 'bold', fontSize: '0.85rem', color: '#60a5fa' }}>
-                      {rec.common?.ref_no || rec.id}
+          <div style={{ marginTop: '1rem', background: '#0f172a', border: '1.5px solid #f59e0b', borderRadius: '10px', padding: '1.1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+              <h4 style={{ margin: 0, fontSize: '1rem', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800 }}>
+                <FolderOpen size={18} /> Saved Quotation Drafts Archive ({savedRecords.length})
+              </h4>
+              <button
+                onClick={() => setShowSavedList(false)}
+                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '0.85rem' }}>
+              {savedRecords.map((rec) => {
+                const isActive = rec.id === currentDraftId;
+                const recTitle = rec.title || rec.common?.ref_no || rec.id;
+                const itemCount = rec.common?.items?.length || 0;
+                const dateStr = rec.updated_at || 'Saved';
+
+                return (
+                  <div
+                    key={rec.id}
+                    onClick={() => handleLoadSavedRecord(rec)}
+                    style={{
+                      background: isActive ? '#1e1b4b' : '#1e293b',
+                      border: isActive ? '2px solid #6366f1' : '1px solid #334155',
+                      borderRadius: '8px',
+                      padding: '0.85rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '0.5rem',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '0.92rem', color: isActive ? '#a5b4fc' : '#f8fafc', lineHeight: 1.3 }}>
+                          {recTitle}
+                        </div>
+                        {isActive && (
+                          <span style={{ background: '#6366f1', color: '#fff', fontSize: '0.68rem', fontWeight: 800, padding: '0.15rem 0.45rem', borderRadius: '4px', whiteSpace: 'nowrap' }}>
+                            ACTIVE
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.35rem' }}>
+                        {rec.common?.ref_no ? `Ref: ${rec.common.ref_no} | ` : ''}{itemCount} Particulars
+                      </div>
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                      Items: {rec.common?.items?.length || 0} | {rec.updated_at || 'Saved'}
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.4rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div style={{ fontSize: '0.73rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                        <Clock size={12} /> {dateStr}
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); handleLoadSavedRecord(rec); }}
+                          style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', padding: '0.25rem 0.65rem', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}
+                        >
+                          Load
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteSavedRecord(rec.id, e)}
+                          style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer', fontSize: '0.75rem' }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <button
-                    onClick={(e) => handleDeleteSavedRecord(rec.id, e)}
-                    style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: 'none', borderRadius: '4px', padding: '0.3rem 0.5rem', cursor: 'pointer', fontSize: '0.75rem' }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1277,6 +1386,97 @@ export default function QuotationGenerator({ poData }) {
           </div>
         </div>
       </div>
+
+      {/* SAVE DRAFT MODAL DIALOG */}
+      {showSaveModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: '#0f172a',
+            border: '1.5px solid #3b82f6',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            maxWidth: '480px',
+            width: '100%',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#f8fafc', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Save size={20} color="#3b82f6" /> Save Quotation Draft
+              </h3>
+              <button
+                onClick={() => setShowSaveModal(false)}
+                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>
+                Draft Title / Label <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <input
+                type="text"
+                className="input-field"
+                value={draftTitle}
+                onChange={(e) => setDraftTitle(e.target.value)}
+                placeholder="e.g. Wheel Workshop 10 Items Enquiry"
+                autoFocus
+                style={{ width: '100%', fontSize: '0.95rem', padding: '0.6rem 0.75rem' }}
+              />
+              <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.35rem' }}>
+                Give your quotation draft a title so you can easily identify & load it later.
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => setShowSaveModal(false)}
+                style={{ padding: '0.55rem 1rem', fontSize: '0.85rem' }}
+              >
+                Cancel
+              </button>
+
+              {currentDraftId && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => executeSaveQuotationDraft(true)}
+                  disabled={isSaving}
+                  style={{ padding: '0.55rem 1rem', fontSize: '0.85rem' }}
+                >
+                  {isSaving ? 'Saving...' : 'Update Current Draft'}
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => executeSaveQuotationDraft(false)}
+                disabled={isSaving}
+                style={{ padding: '0.55rem 1.1rem', fontSize: '0.85rem', fontWeight: 700 }}
+              >
+                {isSaving ? 'Saving...' : (currentDraftId ? 'Save as New Draft' : 'Save Draft')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -34,13 +34,27 @@ def save_record(data: Dict[str, Any]) -> Dict[str, Any]:
     is_quotation = "common" in data or "quotation_ref" in data or data.get("record_type") == "quotation"
     if is_quotation:
         data["record_type"] = "quotation"
-        ref_no = data.get("common", {}).get("ref_no") or data.get("ref_no", "HT-BQ")
-        clean_ref = str(ref_no).replace("/", "_").replace("\\", "_")
-        record_id = data.get("id") or f"QUOT-{clean_ref}"
+        ref_no = data.get("common", {}).get("ref_no") or data.get("ref_no", "")
+        # Generate a unique ID for new drafts if data.get("id") is not explicitly passed
+        if not data.get("id"):
+            timestamp_ms = int(time.time() * 1000)
+            clean_ref = str(ref_no).replace("/", "_").replace("\\", "_").strip() if ref_no else "DRAFT"
+            record_id = f"QUOT-{clean_ref}-{timestamp_ms}"
+        else:
+            record_id = data["id"]
+        
+        # Ensure a user title exists
+        title = data.get("title") or data.get("draft_title")
+        if not title:
+            item_count = len(data.get("common", {}).get("items", []))
+            title = f"Quotation {ref_no} ({item_count} items)".strip() if ref_no else f"Quotation Draft ({item_count} items)"
+        data["title"] = title
     else:
         data["record_type"] = "po"
         po_no = data.get("po_number", "55265692101304")
         record_id = data.get("id") or f"REC-{po_no}"
+        if not data.get("title"):
+            data["title"] = f"PO #{po_no}"
     
     data["id"] = record_id
     data["updated_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
