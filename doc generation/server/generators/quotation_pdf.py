@@ -11,6 +11,14 @@ def get_image_path(filename: str) -> str:
     path = os.path.join(SAMPLE_DIR, filename)
     if os.path.exists(path):
         return path.replace("\\", "/")
+    if filename.endswith(".jpg"):
+        alt_path = os.path.join(SAMPLE_DIR, filename[:-4] + ".jpeg")
+        if os.path.exists(alt_path):
+            return alt_path.replace("\\", "/")
+    elif filename.endswith(".jpeg"):
+        alt_path = os.path.join(SAMPLE_DIR, filename[:-5] + ".jpg")
+        if os.path.exists(alt_path):
+            return alt_path.replace("\\", "/")
     return ""
 
 def html_to_pdf(html_content: str, output_path: str) -> str:
@@ -548,9 +556,337 @@ def generate_madhu_quotation_pdf(data: Dict[str, Any], output_path: str) -> str:
     return html_to_pdf(html, output_path)
 
 
+def generate_lovely_quotation_pdf(data: Dict[str, Any], output_path: str) -> str:
+    """
+    Generates Lovely General Order Supplier Budgetary Quotation PDF.
+    """
+    top_img = get_image_path("lovely-top.jpg")
+    stamp_img = get_image_path("lovely-stamp.jpg")
+
+    common = data.get("common", {})
+    lovely_data = data.get("lovely_supplier", {})
+
+    ref_no = common.get("ref_no", "F/DPS/MMC(D)/27")
+    ref_date = common.get("ref_date", "28/04/2026")
+    consignee_lines = common.get("consignee_address", "The, AWM (DIESEL)\nEASTERN RLY, JAMALPUR").split("\n")
+    consignee_html = "<br/>".join(consignee_lines)
+
+    org_ref = lovely_data.get("quotation_ref", "LV/23/26-27")
+    org_date = lovely_data.get("quotation_date", "29/04/2026")
+
+    items = common.get("items", [])
+    rates = lovely_data.get("rates", {})
+
+    items_html = ""
+    for idx, item in enumerate(items, 1):
+        sr = item.get("sr_no", idx)
+        desc = item.get("description", "")
+        qty_num = item.get("quantity", 1)
+        qty_num_str = int(qty_num) if float(qty_num).is_integer() else qty_num
+        unit = item.get("unit", "Nos")
+        qty_str = f"{qty_num_str} {unit}"
+        
+        rate_val = rates.get(str(sr)) or rates.get(sr) or 0
+        rate_display = f"{rate_val}/-" if rate_val else "0/-"
+
+        items_html += f"""
+        <tr style="height: 38px;">
+            <td style="border: 1px solid #000; text-align: center; font-weight: bold; font-size: 10pt;">{sr}</td>
+            <td style="border: 1px solid #000; padding: 6px 10px; font-weight: bold; font-size: 9.5pt;">{desc}</td>
+            <td style="border: 1px solid #000; text-align: center; font-weight: bold; font-size: 10pt;">{qty_str}</td>
+            <td style="border: 1px solid #000; text-align: center; font-weight: bold; font-size: 10pt;">{rate_display}</td>
+        </tr>
+        """
+
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            @page {{
+                size: A4 portrait;
+                margin: 12mm 15mm 32mm 15mm;
+                @frame footer_frame {{
+                    -pdf-frame-content: footerContent;
+                    bottom: 8mm;
+                    margin-left: 15mm;
+                    margin-right: 15mm;
+                    height: 25mm;
+                }}
+            }}
+            body {{
+                font-family: Garamond, 'Times New Roman', serif;
+                font-size: 9.5pt;
+                line-height: 1.3;
+                color: #000;
+            }}
+            .header-table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 5px;
+            }}
+            .items-table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+                margin-bottom: 15px;
+            }}
+            .items-table th {{
+                border: 1px solid #000;
+                background-color: #222222;
+                color: #ffffff;
+                padding: 6px 8px;
+                font-weight: bold;
+                font-size: 10pt;
+                text-align: center;
+            }}
+        </style>
+    </head>
+    <body>
+        <table class="header-table">
+            <tr>
+                <td width="50%" style="vertical-align: top; font-size: 8.5pt; font-weight: bold; font-style: italic;">
+                    GSTIN- 10EOBPK6340Q1ZU<br/>
+                    Vender Code: 57722
+                </td>
+                <td width="50%" style="text-align: right; vertical-align: top; font-size: 8.5pt; font-weight: bold; font-style: italic;">
+                    <u>Mob.:</u> 9852949143
+                </td>
+            </tr>
+        </table>
+
+        <div style="text-align: center; margin-bottom: 8px;">
+            {"<img src='" + top_img + "' style='max-height: 90px; width: 100%;' />" if top_img else "<h2 style='margin:0; font-size:18pt;'>LOVELY GENERAL ORDER SUPPLIER</h2>"}
+        </div>
+
+        <table style="width: 100%; margin-bottom: 10px; font-weight: bold; font-style: italic; font-size: 10pt;">
+            <tr>
+                <td><u>Ref:-</u> {org_ref}</td>
+                <td style="text-align: right;">Date:- {org_date}</td>
+            </tr>
+        </table>
+
+        <hr style="border: none; border-top: 1px solid #000; margin: 4px 0 12px 0;" />
+
+        <div style="text-align: center; margin-bottom: 15px;">
+            <u style="font-size: 12pt; font-weight: bold;">Budgetary Quotation</u>
+        </div>
+
+        <div style="margin-bottom: 15px; font-weight: bold; font-size: 10pt; line-height: 1.4;">
+            TO,<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;{consignee_html}
+        </div>
+
+        <table style="width: 100%; margin-bottom: 15px; font-weight: bold; font-style: italic; font-size: 9.5pt;">
+            <tr>
+                <td><u>Ref:-</u> {ref_no}</td>
+                <td style="text-align: right;"><u>Date:-</u> {ref_date}</td>
+            </tr>
+        </table>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th width="10%">[Sl. No</th>
+                    <th width="60%">Description</th>
+                    <th width="15%">Qty</th>
+                    <th width="15%">Rate</th>
+                </tr>
+            </thead>
+            <tbody>
+                {items_html}
+            </tbody>
+        </table>
+
+        <div id="footerContent">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td width="55%" style="vertical-align: bottom; font-size: 9pt; font-style: italic;">
+                        <u><b>Terms & Condition</b></u><br/>
+                        1. GST@18% Extra<br/>
+                        2. For Destination<br/>
+                        3. Delivery within 30 days
+                    </td>
+                    <td width="45%" style="text-align: right; vertical-align: bottom;">
+                        {"<img src='" + stamp_img + "' style='max-width: 180px;' />" if stamp_img else "<b style='color:#1e3a8a;'>LOVELY GENERAL ORDER SUPPLIER<br/>Manish Kumar (Proprietor)</b>"}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </body>
+    </html>
+    """
+    return html_to_pdf(html, output_path)
+
+
+def generate_raju_quotation_pdf(data: Dict[str, Any], output_path: str) -> str:
+    """
+    Generates Raju Engineering Works Budgetary Quotation PDF.
+    """
+    common = data.get("common", {})
+    raju_data = data.get("raju_engineering_works", {})
+
+    ref_no = common.get("ref_no", "Nil")
+    ref_date = common.get("ref_date", "Nil")
+    consignee_lines = common.get("consignee_address", "Dy, CMT\nEASTERN RLY. JAMALPUR").split("\n")
+    consignee_html = "<br/>".join(consignee_lines)
+
+    org_ref = raju_data.get("quotation_ref", "REW/BQ/26-27")
+    org_date = raju_data.get("quotation_date", "02/06/2026")
+
+    items = common.get("items", [])
+    rates = raju_data.get("rates", {})
+
+    items_html = ""
+    for idx, item in enumerate(items, 1):
+        sr = item.get("sr_no", idx)
+        desc = item.get("description", "")
+        qty_num = item.get("quantity", 1)
+        qty_num_str = int(qty_num) if float(qty_num).is_integer() else qty_num
+        unit = item.get("unit", "NO")
+        qty_str = f"{qty_num_str} {unit}"
+        
+        rate_val = rates.get(str(sr)) or rates.get(sr) or 0
+        rate_display = f"Rs.{rate_val}/-" if rate_val else "Rs.0/-"
+
+        items_html += f"""
+        <tr style="height: 38px;">
+            <td style="border: 1px solid #000; text-align: center; font-weight: bold; font-size: 10pt;">{sr}</td>
+            <td style="border: 1px solid #000; padding: 6px 10px; font-weight: bold; font-size: 9.5pt;">{desc}</td>
+            <td style="border: 1px solid #000; text-align: center; font-weight: bold; font-size: 10pt;">{qty_str}</td>
+            <td style="border: 1px solid #000; text-align: center; font-weight: bold; font-size: 10pt;">{rate_display}</td>
+        </tr>
+        """
+
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            @page {{
+                size: A4 portrait;
+                margin: 12mm 15mm 32mm 15mm;
+                @frame footer_frame {{
+                    -pdf-frame-content: footerContent;
+                    bottom: 8mm;
+                    margin-left: 15mm;
+                    margin-right: 15mm;
+                    height: 25mm;
+                }}
+            }}
+            body {{
+                font-family: Helvetica, Arial, sans-serif;
+                font-size: 9.2pt;
+                line-height: 1.35;
+                color: #000;
+            }}
+            .header-table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 5px;
+            }}
+            .items-table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+                margin-bottom: 15px;
+            }}
+            .items-table th {{
+                border: 1px solid #000;
+                background-color: #111827;
+                color: #ffffff;
+                padding: 6px 8px;
+                font-weight: bold;
+                font-size: 10pt;
+                text-align: center;
+            }}
+        </style>
+    </head>
+    <body>
+        <table class="header-table">
+            <tr>
+                <td width="60%" style="vertical-align: top; font-size: 8.5pt; font-weight: bold;">
+                    GSTIN- 10JRHPK4490P1Z8<br/>
+                    MSME- UDYAM-BR-22-4015162
+                </td>
+                <td width="40%" style="text-align: right; vertical-align: top; font-size: 8.5pt; font-weight: bold;">
+                    <u>Mob:-</u> 8651757734
+                </td>
+            </tr>
+        </table>
+
+        <div style="text-align: center; margin-top: 5px; margin-bottom: 10px;">
+            <b style="font-size: 17pt; letter-spacing: 1px; display: block;">M/S RAJU ENGINEERING WORKS</b>
+            <div style="font-size: 9.5pt; font-weight: bold; margin-top: 2px;">Railway Contractor</div>
+            <div style="font-size: 8.5pt; font-weight: bold; margin-top: 2px;">Fulka Gumti, Post-Jamalpur, Munger, Bihar, 811214</div>
+            <div style="font-size: 8pt; color: #444;">Email- rajuengineeringworksjmp@gmail.com</div>
+        </div>
+
+        <table style="width: 100%; margin-bottom: 8px; font-weight: bold; font-size: 10pt;">
+            <tr>
+                <td><u>REF.-</u> {org_ref}</td>
+                <td style="text-align: right;">DATE:- {org_date}</td>
+            </tr>
+        </table>
+
+        <hr style="border: none; border-top: 1px solid #000; margin: 4px 0 12px 0;" />
+
+        <div style="margin-bottom: 15px; font-weight: bold; font-size: 10pt; line-height: 1.4;">
+            To.<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;{consignee_html}
+        </div>
+
+        <table style="width: 100%; margin-bottom: 15px; font-weight: bold; font-size: 9.5pt;">
+            <tr>
+                <td>REF. <u>No:-</u> {ref_no}</td>
+                <td style="text-align: right;">DATE:- {ref_date}</td>
+            </tr>
+        </table>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th width="10%">Sr. No</th>
+                    <th width="60%">DESCRIPTION</th>
+                    <th width="15%">QTY</th>
+                    <th width="15%">RATE</th>
+                </tr>
+            </thead>
+            <tbody>
+                {items_html}
+            </tbody>
+        </table>
+
+        <div id="footerContent">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td width="55%" style="vertical-align: bottom; font-size: 8.5pt; font-weight: bold;">
+                        (1) GST@18% Extra<br/>
+                        (2) For Destination<br/>
+                        (3) Delivery within 30 days<br/>
+                        (4) Inspection by consignees<br/>
+                        (5) Payment 100% against CRN
+                    </td>
+                    <td width="45%" style="text-align: right; vertical-align: bottom;">
+                        <div style="border: 1px dashed #000; padding: 8px; text-align: center; display: inline-block;">
+                            <b>M/S RAJU ENGINEERING WORKS</b><br/><br/>
+                            <span style="font-size: 8.5pt;">Proprietor</span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </body>
+    </html>
+    """
+    return html_to_pdf(html, output_path)
+
+
 def generate_quotation_bundle(data: Dict[str, Any], output_path: str) -> str:
     """
-    Generates all 3 organization quotation PDFs and packages them into a ZIP file.
+    Generates all 5 organization quotation PDFs and packages them into a ZIP file.
     """
     temp_dir = os.path.dirname(output_path)
     ref_no_clean = data.get("common", {}).get("ref_no", "REF").replace("/", "_").replace("\\", "_")
@@ -558,14 +894,21 @@ def generate_quotation_bundle(data: Dict[str, Any], output_path: str) -> str:
     hind_pdf = os.path.join(temp_dir, f"Quotation_Hind_Traders_{ref_no_clean}.pdf")
     yasha_pdf = os.path.join(temp_dir, f"Quotation_Yasha_Enterprises_{ref_no_clean}.pdf")
     madhu_pdf = os.path.join(temp_dir, f"Quotation_Madhu_Enterprises_{ref_no_clean}.pdf")
+    lovely_pdf = os.path.join(temp_dir, f"Quotation_Lovely_Supplier_{ref_no_clean}.pdf")
+    raju_pdf = os.path.join(temp_dir, f"Quotation_Raju_Engineering_{ref_no_clean}.pdf")
 
     generate_hind_quotation_pdf(data, hind_pdf)
     generate_yasha_quotation_pdf(data, yasha_pdf)
     generate_madhu_quotation_pdf(data, madhu_pdf)
+    generate_lovely_quotation_pdf(data, lovely_pdf)
+    generate_raju_quotation_pdf(data, raju_pdf)
 
     with zipfile.ZipFile(output_path, "w") as zipf:
         zipf.write(hind_pdf, arcname=os.path.basename(hind_pdf))
         zipf.write(yasha_pdf, arcname=os.path.basename(yasha_pdf))
         zipf.write(madhu_pdf, arcname=os.path.basename(madhu_pdf))
+        zipf.write(lovely_pdf, arcname=os.path.basename(lovely_pdf))
+        zipf.write(raju_pdf, arcname=os.path.basename(raju_pdf))
 
     return output_path
+

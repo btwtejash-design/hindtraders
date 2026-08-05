@@ -23,12 +23,16 @@ try:
         generate_hind_quotation_pdf,
         generate_yasha_quotation_pdf,
         generate_madhu_quotation_pdf,
+        generate_lovely_quotation_pdf,
+        generate_raju_quotation_pdf,
         generate_quotation_bundle
     )
     from server.generators.quotation_excel import (
         generate_hind_quotation_excel,
         generate_yasha_quotation_excel,
-        generate_madhu_quotation_excel
+        generate_madhu_quotation_excel,
+        generate_lovely_quotation_excel,
+        generate_raju_quotation_excel
     )
     from server.db_manager import (
         get_all_records,
@@ -54,12 +58,16 @@ except ImportError:
         generate_hind_quotation_pdf,
         generate_yasha_quotation_pdf,
         generate_madhu_quotation_pdf,
+        generate_lovely_quotation_pdf,
+        generate_raju_quotation_pdf,
         generate_quotation_bundle
     )
     from generators.quotation_excel import (
         generate_hind_quotation_excel,
         generate_yasha_quotation_excel,
-        generate_madhu_quotation_excel
+        generate_madhu_quotation_excel,
+        generate_lovely_quotation_excel,
+        generate_raju_quotation_excel
     )
     from db_manager import (
         get_all_records,
@@ -323,6 +331,16 @@ def get_sample_quotation_data():
             "quotation_ref": "ME/12/26-27",
             "quotation_date": "06/05/2026",
             "rates": { "1": "95", "2": "98", "3": "105", "4": "115", "5": "130", "6": "180", "7": "25", "8": "28", "9": "50", "10": "65" }
+        },
+        "lovely_supplier": {
+            "quotation_ref": "LV/23/26-27",
+            "quotation_date": "29/04/2026",
+            "rates": { "1": "90", "2": "95", "3": "99", "4": "110", "5": "125", "6": "170", "7": "22", "8": "25", "9": "45", "10": "60" }
+        },
+        "raju_engineering_works": {
+            "quotation_ref": "REW/BQ/26-27",
+            "quotation_date": "02/06/2026",
+            "rates": { "1": "85", "2": "90", "3": "95", "4": "105", "5": "120", "6": "160", "7": "20", "8": "22", "9": "40", "10": "55" }
         }
     }
 
@@ -419,9 +437,57 @@ def generate_madhu_quotation_excel_endpoint(data: Dict[str, Any] = Body(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Madhu Enterprises Excel error: {str(e)}")
 
+@app.post("/api/quotations/generate/lovely")
+def generate_lovely_quotation_endpoint(data: Dict[str, Any] = Body(...)):
+    """Generates Lovely General Order Supplier Budgetary Quotation PDF"""
+    try:
+        ref_no = data.get("common", {}).get("ref_no", "LV").replace("/", "_").replace("\\", "_")
+        out_filename = f"Quotation_Lovely_Supplier_{ref_no}.pdf"
+        out_path = os.path.join(TEMP_DIR, out_filename)
+        generate_lovely_quotation_pdf(data, out_path)
+        return FileResponse(out_path, filename=out_filename, media_type="application/pdf")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lovely Supplier quotation generation error: {str(e)}")
+
+@app.post("/api/quotations/generate/lovely-excel")
+def generate_lovely_quotation_excel_endpoint(data: Dict[str, Any] = Body(...)):
+    """Generates Lovely General Order Supplier Budgetary Quotation Excel"""
+    try:
+        ref_no = data.get("common", {}).get("ref_no", "LV").replace("/", "_").replace("\\", "_")
+        out_filename = f"Quotation_Lovely_Supplier_{ref_no}.xlsx"
+        out_path = os.path.join(TEMP_DIR, out_filename)
+        generate_lovely_quotation_excel(data, out_path)
+        return FileResponse(out_path, filename=out_filename, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lovely Supplier Excel error: {str(e)}")
+
+@app.post("/api/quotations/generate/raju")
+def generate_raju_quotation_endpoint(data: Dict[str, Any] = Body(...)):
+    """Generates Raju Engineering Works Budgetary Quotation PDF"""
+    try:
+        ref_no = data.get("common", {}).get("ref_no", "REW").replace("/", "_").replace("\\", "_")
+        out_filename = f"Quotation_Raju_Engineering_{ref_no}.pdf"
+        out_path = os.path.join(TEMP_DIR, out_filename)
+        generate_raju_quotation_pdf(data, out_path)
+        return FileResponse(out_path, filename=out_filename, media_type="application/pdf")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Raju Engineering Works quotation generation error: {str(e)}")
+
+@app.post("/api/quotations/generate/raju-excel")
+def generate_raju_quotation_excel_endpoint(data: Dict[str, Any] = Body(...)):
+    """Generates Raju Engineering Works Budgetary Quotation Excel"""
+    try:
+        ref_no = data.get("common", {}).get("ref_no", "REW").replace("/", "_").replace("\\", "_")
+        out_filename = f"Quotation_Raju_Engineering_{ref_no}.xlsx"
+        out_path = os.path.join(TEMP_DIR, out_filename)
+        generate_raju_quotation_excel(data, out_path)
+        return FileResponse(out_path, filename=out_filename, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Raju Engineering Works Excel error: {str(e)}")
+
 @app.post("/api/quotations/generate/bundle")
 def generate_quotation_bundle_endpoint(data: Dict[str, Any] = Body(...)):
-    """Generates ZIP bundle containing PDFs for all 3 organization quotations"""
+    """Generates ZIP bundle containing PDFs for all 5 organization quotations"""
     try:
         ref_no = data.get("common", {}).get("ref_no", "ALL").replace("/", "_").replace("\\", "_")
         zip_filename = f"Quotations_Bundle_{ref_no}.zip"

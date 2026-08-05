@@ -3,6 +3,8 @@ import { Upload, Sparkles, Plus, Trash2, Download, Eye, FileText, CheckCircle, S
 import HindQuotationPreview from './previews/HindQuotationPreview';
 import YashaQuotationPreview from './previews/YashaQuotationPreview';
 import MadhuQuotationPreview from './previews/MadhuQuotationPreview';
+import LovelyQuotationPreview from './previews/LovelyQuotationPreview';
+import RajuQuotationPreview from './previews/RajuQuotationPreview';
 
 const getApiBase = () => {
   if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
@@ -20,7 +22,7 @@ export default function QuotationGenerator({ poData }) {
   const [isParsing, setIsParsing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
-  const [activePreviewTab, setActivePreviewTab] = useState('hind'); // 'hind' | 'yasha' | 'madhu'
+  const [activePreviewTab, setActivePreviewTab] = useState('hind'); // 'hind' | 'yasha' | 'madhu' | 'lovely' | 'raju'
   const [savedRecords, setSavedRecords] = useState([]);
   const [showSavedList, setShowSavedList] = useState(false);
 
@@ -62,6 +64,18 @@ export default function QuotationGenerator({ poData }) {
     rates: { 1: '95', 2: '98', 3: '105', 4: '115', 5: '130', 6: '180', 7: '25', 8: '28', 9: '50', 10: '65' }
   });
 
+  const [lovelyData, setLovelyData] = useState({
+    quotation_ref: 'LV/23/26-27',
+    quotation_date: '29/04/2026',
+    rates: { 1: '90', 2: '95', 3: '99', 4: '110', 5: '125', 6: '170', 7: '22', 8: '25', 9: '45', 10: '60' }
+  });
+
+  const [rajuData, setRajuData] = useState({
+    quotation_ref: 'REW/BQ/26-27',
+    quotation_date: '02/06/2026',
+    rates: { 1: '85', 2: '90', 3: '95', 4: '105', 5: '120', 6: '160', 7: '20', 8: '22', 9: '40', 10: '55' }
+  });
+
   useEffect(() => {
     fetchSavedQuotationRecords();
   }, []);
@@ -98,15 +112,21 @@ export default function QuotationGenerator({ poData }) {
     const newRatesHind = {};
     const newRatesYasha = {};
     const newRatesMadhu = {};
+    const newRatesLovely = {};
+    const newRatesRaju = {};
     poItems.forEach((item) => {
       newRatesHind[item.sr_no] = item.rate ? String(item.rate) : '25';
       newRatesYasha[item.sr_no] = item.rate ? String(Math.round(item.rate * 0.9)) : '20';
       newRatesMadhu[item.sr_no] = item.rate ? String(Math.round(item.rate * 1.1)) : '30';
+      newRatesLovely[item.sr_no] = item.rate ? String(Math.round(item.rate * 1.05)) : '28';
+      newRatesRaju[item.sr_no] = item.rate ? String(Math.round(item.rate * 0.95)) : '22';
     });
 
     setHindData(prev => ({ ...prev, rates: newRatesHind }));
     setYashaData(prev => ({ ...prev, rates: newRatesYasha }));
     setMadhuData(prev => ({ ...prev, rates: newRatesMadhu }));
+    setLovelyData(prev => ({ ...prev, rates: newRatesLovely }));
+    setRajuData(prev => ({ ...prev, rates: newRatesRaju }));
     setStatusMsg(`Successfully imported ${poItems.length} items from active PO #${poData.po_number}!`);
   };
 
@@ -118,7 +138,9 @@ export default function QuotationGenerator({ poData }) {
       common: commonData,
       hind_traders: hindData,
       yasha_enterprises: yashaData,
-      madhu_enterprises: madhuData
+      madhu_enterprises: madhuData,
+      lovely_supplier: lovelyData,
+      raju_engineering_works: rajuData
     };
 
     try {
@@ -147,6 +169,8 @@ export default function QuotationGenerator({ poData }) {
     if (rec.hind_traders) setHindData(rec.hind_traders);
     if (rec.yasha_enterprises) setYashaData(rec.yasha_enterprises);
     if (rec.madhu_enterprises) setMadhuData(rec.madhu_enterprises);
+    if (rec.lovely_supplier) setLovelyData(rec.lovely_supplier);
+    if (rec.raju_engineering_works) setRajuData(rec.raju_engineering_works);
     setStatusMsg(`Loaded saved quotation record: ${rec.common?.ref_no || rec.id}`);
   };
 
@@ -194,16 +218,22 @@ export default function QuotationGenerator({ poData }) {
         const newRatesHind = {};
         const newRatesYasha = {};
         const newRatesMadhu = {};
+        const newRatesLovely = {};
+        const newRatesRaju = {};
         (parsed.items || []).forEach((item, idx) => {
           const sr = item.sr_no || (idx + 1);
           newRatesHind[sr] = '25';
           newRatesYasha[sr] = '20';
           newRatesMadhu[sr] = '30';
+          newRatesLovely[sr] = '28';
+          newRatesRaju[sr] = '22';
         });
 
         setHindData(prev => ({ ...prev, rates: { ...newRatesHind, ...prev.rates } }));
         setYashaData(prev => ({ ...prev, rates: { ...newRatesYasha, ...prev.rates } }));
         setMadhuData(prev => ({ ...prev, rates: { ...newRatesMadhu, ...prev.rates } }));
+        setLovelyData(prev => ({ ...prev, rates: { ...newRatesLovely, ...prev.rates } }));
+        setRajuData(prev => ({ ...prev, rates: { ...newRatesRaju, ...prev.rates } }));
 
         setStatusMsg(`Successfully extracted ${parsed.items?.length || 0} items from ${file.name}!`);
       } else {
@@ -263,7 +293,9 @@ export default function QuotationGenerator({ poData }) {
       common: commonData,
       hind_traders: hindData,
       yasha_enterprises: yashaData,
-      madhu_enterprises: madhuData
+      madhu_enterprises: madhuData,
+      lovely_supplier: lovelyData,
+      raju_engineering_works: rajuData
     };
 
     try {
@@ -293,7 +325,9 @@ export default function QuotationGenerator({ poData }) {
     common: commonData,
     hind_traders: hindData,
     yasha_enterprises: yashaData,
-    madhu_enterprises: madhuData
+    madhu_enterprises: madhuData,
+    lovely_supplier: lovelyData,
+    raju_engineering_works: rajuData
   };
 
   return (
@@ -314,7 +348,7 @@ export default function QuotationGenerator({ poData }) {
               Budgetary Quotation Generator
             </h2>
             <p style={{ margin: '0.25rem 0 0 0', color: '#94a3b8', fontSize: '0.875rem' }}>
-              Generate custom quotations for <strong>Hind Traders</strong>, <strong>Yasha Enterprises</strong>, and <strong>Madhu Enterprises</strong> with AI document import.
+              Generate custom quotations for <strong>Hind Traders</strong>, <strong>Yasha Enterprises</strong>, <strong>Madhu Enterprises</strong>, <strong>Lovely Supplier</strong>, and <strong>Raju Engineering Works</strong> with AI document import.
             </p>
           </div>
 
@@ -367,7 +401,7 @@ export default function QuotationGenerator({ poData }) {
               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.1rem' }}
             >
               <Download size={18} />
-              Download All 3 (ZIP)
+              Download All 5 (ZIP)
             </button>
           </div>
         </div>
@@ -776,6 +810,148 @@ export default function QuotationGenerator({ poData }) {
                 })}
               </div>
 
+              {/* LOVELY GENERAL ORDER SUPPLIER BOX */}
+              <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <h4 style={{ margin: 0, color: '#a855f7', fontSize: '1rem', fontWeight: 700 }}>
+                    4. Lovely General Order Supplier
+                  </h4>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <button
+                      className="btn btn-outline"
+                      onClick={() => handleDownloadDocument('lovely', `Quotation_Lovely_Supplier_${commonData.ref_no.replace(/\//g, '_')}.pdf`)}
+                      style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                    >
+                      <Download size={13} /> PDF
+                    </button>
+                    <button
+                      className="btn btn-outline"
+                      onClick={() => handleDownloadDocument('lovely-excel', `Quotation_Lovely_Supplier_${commonData.ref_no.replace(/\//g, '_')}.xlsx`)}
+                      style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                      title="Download Excel Spreadsheet"
+                    >
+                      <FileCode size={13} /> Excel
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Lovely Ref No</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={lovelyData.quotation_ref}
+                      onChange={(e) => setLovelyData({ ...lovelyData, quotation_ref: e.target.value })}
+                      style={{ width: '100%', fontSize: '0.85rem', padding: '0.35rem 0.5rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Lovely Date</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={lovelyData.quotation_date}
+                      onChange={(e) => setLovelyData({ ...lovelyData, quotation_date: e.target.value })}
+                      style={{ width: '100%', fontSize: '0.85rem', padding: '0.35rem 0.5rem' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>
+                  Enter Rates for Lovely Supplier (₹):
+                </div>
+                {commonData.items.map((item, idx) => {
+                  const sr = item.sr_no || (idx + 1);
+                  return (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                      <span style={{ fontSize: '0.8rem', color: '#94a3b8', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        #{sr}. {item.description || 'Item'}
+                      </span>
+                      <input
+                        type="text"
+                        className="input-field"
+                        placeholder="Rate ₹"
+                        value={lovelyData.rates[sr] || ''}
+                        onChange={(e) => handleRateChange(setLovelyData, sr, e.target.value)}
+                        style={{ width: '100px', fontSize: '0.85rem', padding: '0.3rem 0.5rem', textAlign: 'right' }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* RAJU ENGINEERING WORKS BOX */}
+              <div style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <h4 style={{ margin: 0, color: '#06b6d4', fontSize: '1rem', fontWeight: 700 }}>
+                    5. Raju Engineering Works
+                  </h4>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <button
+                      className="btn btn-outline"
+                      onClick={() => handleDownloadDocument('raju', `Quotation_Raju_Engineering_${commonData.ref_no.replace(/\//g, '_')}.pdf`)}
+                      style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                    >
+                      <Download size={13} /> PDF
+                    </button>
+                    <button
+                      className="btn btn-outline"
+                      onClick={() => handleDownloadDocument('raju-excel', `Quotation_Raju_Engineering_${commonData.ref_no.replace(/\//g, '_')}.xlsx`)}
+                      style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                      title="Download Excel Spreadsheet"
+                    >
+                      <FileCode size={13} /> Excel
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Raju Ref No</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={rajuData.quotation_ref}
+                      onChange={(e) => setRajuData({ ...rajuData, quotation_ref: e.target.value })}
+                      style={{ width: '100%', fontSize: '0.85rem', padding: '0.35rem 0.5rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Raju Date</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={rajuData.quotation_date}
+                      onChange={(e) => setRajuData({ ...rajuData, quotation_date: e.target.value })}
+                      style={{ width: '100%', fontSize: '0.85rem', padding: '0.35rem 0.5rem' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.4rem' }}>
+                  Enter Rates for Raju Engineering (₹):
+                </div>
+                {commonData.items.map((item, idx) => {
+                  const sr = item.sr_no || (idx + 1);
+                  return (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                      <span style={{ fontSize: '0.8rem', color: '#94a3b8', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        #{sr}. {item.description || 'Item'}
+                      </span>
+                      <input
+                        type="text"
+                        className="input-field"
+                        placeholder="Rate ₹"
+                        value={rajuData.rates[sr] || ''}
+                        onChange={(e) => handleRateChange(setRajuData, sr, e.target.value)}
+                        style={{ width: '100px', fontSize: '0.85rem', padding: '0.3rem 0.5rem', textAlign: 'right' }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+
             </div>
           </div>
         </div>
@@ -792,13 +968,13 @@ export default function QuotationGenerator({ poData }) {
               </div>
 
               {/* Organization Preview Switcher Tabs */}
-              <div style={{ display: 'flex', gap: '0.35rem', background: '#0f172a', padding: '0.25rem', borderRadius: '8px', border: '1px solid #334155' }}>
+              <div style={{ display: 'flex', gap: '0.35rem', background: '#0f172a', padding: '0.25rem', borderRadius: '8px', border: '1px solid #334155', flexWrap: 'wrap' }}>
                 <button
                   className={`tab-btn ${activePreviewTab === 'hind' ? 'active' : ''}`}
                   onClick={() => setActivePreviewTab('hind')}
                   style={{
-                    padding: '0.35rem 0.75rem',
-                    fontSize: '0.8rem',
+                    padding: '0.35rem 0.65rem',
+                    fontSize: '0.78rem',
                     borderRadius: '6px',
                     border: 'none',
                     background: activePreviewTab === 'hind' ? '#f59e0b' : 'transparent',
@@ -807,14 +983,14 @@ export default function QuotationGenerator({ poData }) {
                     cursor: 'pointer'
                   }}
                 >
-                  Hind Traders
+                  Hind
                 </button>
                 <button
                   className={`tab-btn ${activePreviewTab === 'yasha' ? 'active' : ''}`}
                   onClick={() => setActivePreviewTab('yasha')}
                   style={{
-                    padding: '0.35rem 0.75rem',
-                    fontSize: '0.8rem',
+                    padding: '0.35rem 0.65rem',
+                    fontSize: '0.78rem',
                     borderRadius: '6px',
                     border: 'none',
                     background: activePreviewTab === 'yasha' ? '#ec4899' : 'transparent',
@@ -823,14 +999,14 @@ export default function QuotationGenerator({ poData }) {
                     cursor: 'pointer'
                   }}
                 >
-                  Yasha Enterprises
+                  Yasha
                 </button>
                 <button
                   className={`tab-btn ${activePreviewTab === 'madhu' ? 'active' : ''}`}
                   onClick={() => setActivePreviewTab('madhu')}
                   style={{
-                    padding: '0.35rem 0.75rem',
-                    fontSize: '0.8rem',
+                    padding: '0.35rem 0.65rem',
+                    fontSize: '0.78rem',
                     borderRadius: '6px',
                     border: 'none',
                     background: activePreviewTab === 'madhu' ? '#10b981' : 'transparent',
@@ -839,7 +1015,39 @@ export default function QuotationGenerator({ poData }) {
                     cursor: 'pointer'
                   }}
                 >
-                  Madhu Enterprises
+                  Madhu
+                </button>
+                <button
+                  className={`tab-btn ${activePreviewTab === 'lovely' ? 'active' : ''}`}
+                  onClick={() => setActivePreviewTab('lovely')}
+                  style={{
+                    padding: '0.35rem 0.65rem',
+                    fontSize: '0.78rem',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: activePreviewTab === 'lovely' ? '#a855f7' : 'transparent',
+                    color: activePreviewTab === 'lovely' ? '#fff' : '#94a3b8',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Lovely
+                </button>
+                <button
+                  className={`tab-btn ${activePreviewTab === 'raju' ? 'active' : ''}`}
+                  onClick={() => setActivePreviewTab('raju')}
+                  style={{
+                    padding: '0.35rem 0.65rem',
+                    fontSize: '0.78rem',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: activePreviewTab === 'raju' ? '#06b6d4' : 'transparent',
+                    color: activePreviewTab === 'raju' ? '#fff' : '#94a3b8',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Raju Engg
                 </button>
               </div>
             </div>
@@ -900,6 +1108,42 @@ export default function QuotationGenerator({ poData }) {
                   </button>
                 </>
               )}
+              {activePreviewTab === 'lovely' && (
+                <>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => handleDownloadDocument('lovely', `Quotation_Lovely_Supplier_${commonData.ref_no.replace(/\//g, '_')}.pdf`)}
+                    style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem', background: '#a855f7', borderColor: '#9333ea' }}
+                  >
+                    <Download size={14} /> PDF
+                  </button>
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => handleDownloadDocument('lovely-excel', `Quotation_Lovely_Supplier_${commonData.ref_no.replace(/\//g, '_')}.xlsx`)}
+                    style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+                  >
+                    <FileCode size={14} /> Excel
+                  </button>
+                </>
+              )}
+              {activePreviewTab === 'raju' && (
+                <>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => handleDownloadDocument('raju', `Quotation_Raju_Engineering_${commonData.ref_no.replace(/\//g, '_')}.pdf`)}
+                    style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem', background: '#06b6d4', borderColor: '#0891b2' }}
+                  >
+                    <Download size={14} /> PDF
+                  </button>
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => handleDownloadDocument('raju-excel', `Quotation_Raju_Engineering_${commonData.ref_no.replace(/\//g, '_')}.xlsx`)}
+                    style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+                  >
+                    <FileCode size={14} /> Excel
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Live Preview Document Render */}
@@ -907,6 +1151,8 @@ export default function QuotationGenerator({ poData }) {
               {activePreviewTab === 'hind' && <HindQuotationPreview data={currentFullData} />}
               {activePreviewTab === 'yasha' && <YashaQuotationPreview data={currentFullData} />}
               {activePreviewTab === 'madhu' && <MadhuQuotationPreview data={currentFullData} />}
+              {activePreviewTab === 'lovely' && <LovelyQuotationPreview data={currentFullData} />}
+              {activePreviewTab === 'raju' && <RajuQuotationPreview data={currentFullData} />}
             </div>
           </div>
         </div>
