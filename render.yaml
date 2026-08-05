@@ -14,3 +14,5 @@ services:
         value: 20.18.0
       - key: PYTHONPATH
         value: "doc generation/server:doc generation"
+      - key: GEMINI_API_KEY
+        sync: false
